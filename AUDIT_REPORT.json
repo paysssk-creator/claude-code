@@ -13,7 +13,9 @@
     "bun run precheck 通过",
     "A 股纸面交易模拟模块已添加并通过测试",
     "纸面交易已集成 A 股费用模型与权益曲线",
-    "纸面交易已添加风控与回测引擎"
+    "纸面交易已添加风控与回测引擎",
+    "修复非 Voice 构建下 VoiceContext 运行时崩溃",
+    "CLI 子命令与 RCS 启动能力已验证"
   ],
   "warnings": [
     {
@@ -27,9 +29,9 @@
   ],
   "failed": [],
   "timestamp": "2026-06-28T00:00:00.000Z",
-  "paperTradeDemoStatus": "T+1 sell logic verified, fees, equity curve, risk manager and backtest engine integrated, demo runs clean",
+  "paperTradeDemoStatus": "T+1 sell logic verified, fees/equity/risk/backtest integrated, VoiceContext fixed, CLI/RCS verified, demo runs clean",
   "summary": {
-    "passed": 13,
+    "passed": 15,
     "warnings": 2,
     "failed": 0
   }
