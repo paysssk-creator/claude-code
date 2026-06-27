@@ -127,6 +127,88 @@ describe('PaperBroker', () => {
     expect(broker.getStats().totalTurnover).toBe(20_000)
   })
 
+  test('allows first-day market order without prior close', () => {
+    const broker = new PaperBroker({
+      initialCash: 100_000,
+      marketData: makeAshareDataMap({ '000001': 10 }),
+    })
+    const order = broker.placeOrder({
+      symbol: '000001',
+      side: 'buy',
+      type: 'market',
+      quantity: 1000,
+    })
+    expect(order.status).toBe('filled')
+  })
+
+  test('rejects market order beyond A-share upper price limit', () => {
+    const data = makeAshareDataMap({ '000001': 10 })
+    const broker = new PaperBroker({
+      initialCash: 100_000,
+      marketData: data,
+    })
+    broker.setMarketData('000001', makeAshareMarketData('000001', 12))
+    const order = broker.placeOrder({
+      symbol: '000001',
+      side: 'buy',
+      type: 'market',
+      quantity: 100,
+    })
+    expect(order.status).toBe('rejected')
+    expect(order.rejectReason).toContain('daily limit')
+  })
+
+  test('rejects market order beyond A-share lower price limit', () => {
+    const data = makeAshareDataMap({ '000001': 10 })
+    const broker = new PaperBroker({
+      initialCash: 100_000,
+      marketData: data,
+    })
+    broker.setMarketData('000001', makeAshareMarketData('000001', 8.9))
+    const order = broker.placeOrder({
+      symbol: '000001',
+      side: 'buy',
+      type: 'market',
+      quantity: 100,
+    })
+    expect(order.status).toBe('rejected')
+    expect(order.rejectReason).toContain('daily limit')
+  })
+
+  test('fills market order at exact A-share limit price', () => {
+    const data = makeAshareDataMap({ '000001': 10 })
+    const broker = new PaperBroker({
+      initialCash: 100_000,
+      marketData: data,
+    })
+    broker.setMarketData('000001', makeAshareMarketData('000001', 11))
+    const order = broker.placeOrder({
+      symbol: '000001',
+      side: 'buy',
+      type: 'market',
+      quantity: 100,
+    })
+    expect(order.status).toBe('filled')
+  })
+
+  test('rejects limit order outside A-share price limit', () => {
+    const data = makeAshareDataMap({ '000001': 10 })
+    const broker = new PaperBroker({
+      initialCash: 100_000,
+      marketData: data,
+    })
+    broker.setMarketData('000001', makeAshareMarketData('000001', 10.5))
+    const order = broker.placeOrder({
+      symbol: '000001',
+      side: 'buy',
+      type: 'limit',
+      price: 12.5,
+      quantity: 100,
+    })
+    expect(order.status).toBe('rejected')
+    expect(order.rejectReason).toContain('upper price limit')
+  })
+
   test('records equity curve snapshots', () => {
     const broker = new PaperBroker({
       initialCash: 100_000,

@@ -36,6 +36,7 @@ export class PaperBroker implements Broker {
   private totalFees = 0
   private totalTurnover = 0
   private readonly equityHistory: EquitySnapshot[] = []
+  private readonly previousClose = new Map<string, number>()
 
   constructor(options: PaperBrokerOptions) {
     this.cash = options.initialCash
@@ -67,6 +68,10 @@ export class PaperBroker implements Broker {
   }
 
   setMarketData(symbol: string, data: MarketData): void {
+    const existing = this.marketData.get(symbol)
+    if (existing) {
+      this.previousClose.set(symbol, existing.close)
+    }
     this.marketData.set(symbol, data)
   }
 
@@ -98,22 +103,29 @@ export class PaperBroker implements Broker {
     const executionPrice =
       order.type === 'market' ? data.close : (order.price ?? data.close)
 
-    if (order.type === 'limit' && order.price !== undefined) {
-      if (
-        order.side === 'buy' &&
-        order.price < data.low * (1 - A_SHARE_LIMIT_PCT)
-      ) {
-        order.status = 'rejected'
-        order.rejectReason = 'Limit price below lower price limit'
-        this.orders.set(order.id, order)
-        return order
+    const prevClose = this.previousClose.get(order.symbol)
+    if (prevClose !== undefined) {
+      const upperLimit = prevClose * (1 + A_SHARE_LIMIT_PCT)
+      const lowerLimit = prevClose * (1 - A_SHARE_LIMIT_PCT)
+
+      if (order.type === 'limit' && order.price !== undefined) {
+        if (order.price < lowerLimit) {
+          order.status = 'rejected'
+          order.rejectReason = 'Limit price below lower price limit'
+          this.orders.set(order.id, order)
+          return order
+        }
+        if (order.price > upperLimit) {
+          order.status = 'rejected'
+          order.rejectReason = 'Limit price above upper price limit'
+          this.orders.set(order.id, order)
+          return order
+        }
       }
-      if (
-        order.side === 'sell' &&
-        order.price > data.high * (1 + A_SHARE_LIMIT_PCT)
-      ) {
+
+      if (executionPrice < lowerLimit || executionPrice > upperLimit) {
         order.status = 'rejected'
-        order.rejectReason = 'Limit price above upper price limit'
+        order.rejectReason = 'Execution price outside A-share daily limit'
         this.orders.set(order.id, order)
         return order
       }
