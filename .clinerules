@@ -1,0 +1,59 @@
+# Cline Rules for Claude Code Reverse-Engineered CLI
+
+## Project Identity
+
+- This is a reverse-engineered / decompiled version of Anthropic's Claude Code CLI tool.
+- Goal: restore core functionality while trimming secondary capabilities.
+- Runtime: Bun (not Node.js). ESM + TSX with react-jsx transform.
+- Monorepo with Bun workspaces; 17+ packages under `packages/`.
+
+## Non-Negotiable Checks
+
+- **TypeScript strict mode enforced.** Run `bun run precheck` after meaningful changes; it must pass (typecheck + lint fix + test).
+- Use `bun install` for dependencies.
+- Do not introduce new lint, format, type, or test errors.
+
+## Commits
+
+- Use Conventional Commits: `<type>: <description>`
+- Common types: `feat`, `fix`, `docs`, `chore`, `refactor`
+- Example: `feat: add 1M context model switching`
+
+## Code Conventions
+
+- Prefer editing existing files over creating new ones.
+- Do not add speculative abstractions or helper functions for one-time operations.
+- Avoid `as any` in production code; use `as unknown as SpecificType` or type guards.
+- Use `Record<string, unknown>` for unknown structures instead of `any`.
+- Feature flags: use `import { feature } from 'bun:bundle'` and call `feature('FLAG_NAME')` directly in `if` or ternary conditions only.
+- `src/*` path alias maps to `./src/*`; use it consistently.
+- Ink framework lives in `packages/@ant/ink/`, not `src/ink/`.
+
+## Testing
+
+- Use `bun:test`.
+- Mock only side-effect modules (`log.ts`, `debug.ts`, `bun:bundle`, settings, config, auth, third-party network libs).
+- Do not mock pure functions or upper business modules.
+- Use shared mocks: `tests/mocks/log.ts`, `tests/mocks/debug.ts`.
+- `mock.module` is process-global; be careful of cross-file mock pollution.
+
+## Build & Features
+
+- Default build enables 65+ features defined in `build.ts` (`DEFAULT_BUILD_FEATURES`).
+- Dev mode enables all features via `scripts/dev.ts`.
+- MACRO defines are centralized in `scripts/defines.ts`.
+- Build outputs `dist/cli.js` + chunks; post-build patches `import.meta.require` for Node compatibility.
+
+## Architecture Quick Reference
+
+- Entry: `src/entrypoints/cli.tsx` → `src/main.tsx` for full CLI.
+- Core loop: `src/query.ts`, `src/QueryEngine.ts`, `src/screens/REPL.tsx`.
+- API: `src/services/api/claude.ts`; providers in `src/utils/model/providers.ts`.
+- Tools: `src/Tool.ts`, `src/tools.ts`, `packages/builtin-tools/src/tools/`.
+- State: `src/state/AppState.tsx`, `src/state/AppStateStore.ts`, `src/state/store.ts`.
+
+## Design & UI
+
+- Brand colors: Claude Orange `#D77757`, Claude Blue `#5769F7`.
+- Warm dark surfaces, generous whitespace, typography-driven.
+- Reference `.impeccable.md` for Web UI work.

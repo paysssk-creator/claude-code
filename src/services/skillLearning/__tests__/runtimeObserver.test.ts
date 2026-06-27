@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import {
   resetSkillLearningConfig,
   setSkillLearningConfigForTest,
@@ -25,6 +25,9 @@ beforeEach(() => {
   process.env.CLAUDE_CONFIG_DIR = join(root, 'config')
   process.env.SKILL_LEARNING_ENABLED = '1'
   process.env.NODE_ENV = 'test'
+  // Prevent git from walking up to the user's home directory (which may itself
+  // be a git repository) when resolving project context for temp directories.
+  process.env.GIT_CEILING_DIRECTORIES = dirname(root)
   setSkillLearningConfigForTest({ minConfidence: 0.3, minClusterSize: 1 })
   resetRuntimeObserverForTest()
 })

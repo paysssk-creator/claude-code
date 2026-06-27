@@ -26,6 +26,9 @@ beforeEach(() => {
   resetEnv()
   const tempHome = mkdtempSync(join(tempBase, 'home-'))
   process.env.CLAUDE_CONFIG_DIR = tempHome
+  // Prevent git from walking up to the user's home directory (which may itself
+  // be a git repository) when resolving project context for temp directories.
+  process.env.GIT_CEILING_DIRECTORIES = tempBase
 })
 
 afterAll(() => {

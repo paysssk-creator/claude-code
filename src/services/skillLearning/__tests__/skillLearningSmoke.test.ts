@@ -7,7 +7,7 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { call } from '../../../commands/skill-learning/skill-learning.js'
 import { clearCommandsCache } from '../../../commands.js'
 import { getSkillIndex, searchSkills } from '../../skillSearch/localSearch.js'
@@ -31,6 +31,9 @@ beforeEach(() => {
   process.env.SKILL_LEARNING_ENABLED = '1'
   process.env.ANTHROPIC_API_KEY = 'test-key'
   process.env.NODE_ENV = 'test'
+  // Prevent git from walking up to the user's home directory (which may itself
+  // be a git repository) when resolving project context for temp directories.
+  process.env.GIT_CEILING_DIRECTORIES = dirname(root)
   setSkillLearningConfigForTest({ minConfidence: 0.3, minClusterSize: 1 })
 })
 
