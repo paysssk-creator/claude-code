@@ -13,7 +13,7 @@
  */
 
 import { readdir, readFile } from 'fs/promises'
-import { join, resolve, dirname } from 'path'
+import { join, resolve, dirname, normalize } from 'path'
 import { fileURLToPath } from 'url'
 
 // ─── 从 package.json 读取 dependencies 作为白名单 ────────────────
@@ -112,28 +112,35 @@ async function main() {
 
   console.log(`\n🔍 检查构建产物完整性: ${distDir}\n`)
 
-  // 1. 列出所有 chunk 文件和原生 .node 插件
-  let files: string[]
+  // 1. 递归列出所有 chunk 文件和原生 .node 插件
+  let entries: string[]
   try {
-    files = (await readdir(distDir)).filter(
-      f => f.endsWith('.js') || f.endsWith('.node'),
-    )
+    const dirents = await readdir(distDir, {
+      recursive: true,
+      withFileTypes: true,
+    })
+    entries = dirents
+      .filter(
+        d => d.isFile() && (d.name.endsWith('.js') || d.name.endsWith('.node')),
+      )
+      .map(d => join(d.parentPath, d.name).slice(distDir.length + 1))
+      .filter(Boolean)
   } catch {
     console.error(`❌ 无法读取目录: ${distDir}`)
     console.error('   请先运行 bun run build')
     process.exit(1)
   }
 
-  const fileSet = new Set(files)
-  const jsFiles = files.filter(f => f.endsWith('.js'))
+  const fileSet = new Set(entries)
+  const jsFiles = entries.filter(f => f.endsWith('.js'))
   console.log(
-    `📦 找到 ${jsFiles.length} 个 JS 文件, ${files.length - jsFiles.length} 个原生插件\n`,
+    `📦 找到 ${jsFiles.length} 个 JS 文件, ${entries.length - jsFiles.length} 个原生插件\n`,
   )
 
   const findings: Finding[] = []
 
   // 2. 逐文件扫描
-  for (const file of files) {
+  for (const file of entries) {
     const filePath = join(distDir, file)
     const content = await readFile(filePath, 'utf-8')
     const lines = content.split('\n')
@@ -146,8 +153,7 @@ async function main() {
       const staticImportMatches = line.matchAll(STATIC_IMPORT_RE)
       for (const m of staticImportMatches) {
         const ref = m[1]
-        // 提取文件名部分（去掉 ./）
-        const refFile = ref.replace(/^\.\//, '')
+        const refFile = normalize(join(dirname(file), ref))
         if (!fileSet.has(refFile)) {
           findings.push({
             type: 'broken-chunk-ref',
@@ -168,7 +174,7 @@ async function main() {
         if (NATIVE_FRAMEWORKS.has(mod)) continue
         // 相对路径引用（含原生 .node 插件）只要文件存在于 dist/ 即为合法
         if (mod.startsWith('./') || mod.startsWith('../')) {
-          const refFile = mod.replace(/^\.\.?\//, '')
+          const refFile = normalize(join(dirname(file), mod))
           if (fileSet.has(refFile)) continue
           findings.push({
             type: 'broken-chunk-ref',
