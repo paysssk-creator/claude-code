@@ -16,6 +16,8 @@ export interface BasicRiskManagerOptions {
   maxCashDeployPct?: number
   /** Max orders allowed per symbol per trading day. */
   maxOrdersPerDay?: number
+  /** Halt new orders once drawdown from peak exceeds this fraction. */
+  maxDrawdownPct?: number
 }
 
 /**
@@ -27,12 +29,15 @@ export class BasicRiskManager implements RiskManager {
   private readonly maxPositionValuePct: number
   private readonly maxCashDeployPct: number
   private readonly maxOrdersPerDay: number
+  private readonly maxDrawdownPct: number
   private readonly orderCounts = new Map<string, number>()
+  private peakValue = 0
 
   constructor(options: BasicRiskManagerOptions = {}) {
     this.maxPositionValuePct = options.maxPositionValuePct ?? 0.5
     this.maxCashDeployPct = options.maxCashDeployPct ?? 0.25
     this.maxOrdersPerDay = options.maxOrdersPerDay ?? 2
+    this.maxDrawdownPct = options.maxDrawdownPct ?? 1
   }
 
   approve(
@@ -40,6 +45,17 @@ export class BasicRiskManager implements RiskManager {
     data: MarketData,
     portfolio: Portfolio,
   ): StrategySignal | null {
+    if (portfolio.totalValue > this.peakValue) {
+      this.peakValue = portfolio.totalValue
+    }
+    const drawdown =
+      this.peakValue === 0
+        ? 0
+        : (this.peakValue - portfolio.totalValue) / this.peakValue
+    if (drawdown > this.maxDrawdownPct) {
+      return null
+    }
+
     const key = `${data.symbol}@${data.timestamp.toISOString().slice(0, 10)}`
     const count = this.orderCounts.get(key) ?? 0
     if (count >= this.maxOrdersPerDay) {

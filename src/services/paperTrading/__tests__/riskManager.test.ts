@@ -63,4 +63,27 @@ describe('BasicRiskManager', () => {
     )
     expect(second).toBeNull()
   })
+
+  test('halts new orders after max drawdown is exceeded', () => {
+    const risk = new BasicRiskManager({ maxDrawdownPct: 0.05 })
+    const portfolio: Portfolio = {
+      cash: 100_000,
+      positions: [],
+      totalValue: 100_000,
+    }
+    const first = risk.approve(
+      { symbol: '000001', side: 'buy', quantity: 100, reason: 'dip' },
+      data,
+      portfolio,
+    )
+    expect(first).not.toBeNull()
+
+    portfolio.totalValue = 94_000
+    const second = risk.approve(
+      { symbol: '000001', side: 'buy', quantity: 100, reason: 'dip' },
+      data,
+      portfolio,
+    )
+    expect(second).toBeNull()
+  })
 })
