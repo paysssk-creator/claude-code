@@ -6,13 +6,10 @@
     "npm test 通过",
     ".gitignore 存在",
     ".clinerules 存在",
-    "bun run health 通过"
+    "bun run health 通过",
+    "bun run build:vite 通过"
   ],
   "warnings": [
-    {
-      "name": "存在未提交改动",
-      "detail": "健康检查与生产测试相关脚本待提交"
-    },
     {
       "name": ".env.example 存在 (或 .env 已在 gitignore)",
       "detail": ""
@@ -23,10 +20,10 @@
     }
   ],
   "failed": [],
-  "timestamp": "2026-06-27T00:00:00.000Z",
+  "timestamp": "2026-06-27T22:45:00.000Z",
   "summary": {
-    "passed": 7,
-    "warnings": 3,
+    "passed": 8,
+    "warnings": 2,
     "failed": 0
   }
 }
