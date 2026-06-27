@@ -45,12 +45,18 @@ mock.module('src/constants/tools.js', () => ({
   CORE_TOOLS: new Set(['ExecuteExtraTool', 'SearchExtraTools']),
 }))
 
-// Mock messages module
+// Mock messages module. Keep stubs minimal for this test but include the
+// exports later tests in the same Bun process may need, since mock.module is
+// process-global.
 mock.module('src/utils/messages.js', () => ({
   createUserMessage: ({ content }: { content: string }) => ({
     type: 'user' as const,
     content,
     uuid: 'test-uuid',
+  }),
+  createSystemAPIErrorMessage: () => ({
+    type: 'system',
+    message: { content: 'error' },
   }),
 }))
 

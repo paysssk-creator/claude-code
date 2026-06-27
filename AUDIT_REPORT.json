@@ -7,7 +7,13 @@
     ".gitignore 存在",
     ".clinerules 存在",
     "bun run health 通过",
-    "bun run build:vite 通过"
+    "bun run build:vite 通过",
+    "bun test --coverage 全量通过",
+    "packages/builtin-tools/ 独立测试通过",
+    "bun run precheck 通过",
+    "A 股纸面交易模拟模块已添加并通过测试",
+    "纸面交易已集成 A 股费用模型与权益曲线",
+    "纸面交易已添加风控与回测引擎"
   ],
   "warnings": [
     {
@@ -20,9 +26,10 @@
     }
   ],
   "failed": [],
-  "timestamp": "2026-06-27T22:45:00.000Z",
+  "timestamp": "2026-06-28T00:00:00.000Z",
+  "paperTradeDemoStatus": "T+1 sell logic verified, fees, equity curve, risk manager and backtest engine integrated, demo runs clean",
   "summary": {
-    "passed": 8,
+    "passed": 13,
     "warnings": 2,
     "failed": 0
   }

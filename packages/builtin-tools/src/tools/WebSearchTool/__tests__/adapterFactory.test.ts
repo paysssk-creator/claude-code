@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 
 let isFirstPartyBaseUrl = true
 
@@ -12,6 +12,22 @@ mock.module('src/utils/model/providers.js', () => ({
 const { createAdapter } = await import('../adapters/index')
 
 const originalWebSearchAdapter = process.env.WEB_SEARCH_ADAPTER
+const THIRD_PARTY_ENVS = [
+  'CLAUDE_CODE_USE_OPENAI',
+  'CLAUDE_CODE_USE_GEMINI',
+  'CLAUDE_CODE_USE_GROK',
+] as const
+const originalThirdParty = Object.fromEntries(
+  THIRD_PARTY_ENVS.map(k => [k, process.env[k]] as const),
+)
+
+beforeEach(() => {
+  // Ensure third-party provider flags do not force the Bing fallback
+  // while these unit tests are exercising adapter selection logic.
+  for (const k of THIRD_PARTY_ENVS) {
+    delete process.env[k]
+  }
+})
 
 afterEach(() => {
   isFirstPartyBaseUrl = true
@@ -20,6 +36,14 @@ afterEach(() => {
     delete process.env.WEB_SEARCH_ADAPTER
   } else {
     process.env.WEB_SEARCH_ADAPTER = originalWebSearchAdapter
+  }
+
+  for (const k of THIRD_PARTY_ENVS) {
+    if (originalThirdParty[k] === undefined) {
+      delete process.env[k]
+    } else {
+      process.env[k] = originalThirdParty[k]
+    }
   }
 })
 

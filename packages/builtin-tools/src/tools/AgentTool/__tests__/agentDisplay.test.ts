@@ -1,7 +1,9 @@
 import { mock, describe, expect, test } from 'bun:test'
 
-// Mock heavy deps
+// Mock heavy deps. Spread the real module so later test files see all exports.
+const realAgent = await import('src/utils/model/agent.js')
 mock.module('src/utils/model/agent.js', () => ({
+  ...realAgent,
   getDefaultSubagentModel: () => undefined,
 }))
 

@@ -15,6 +15,8 @@ mock.module('src/constants/tools.js', () => ({
   ASYNC_AGENT_ALLOWED_TOOLS: new Set(),
   CUSTOM_AGENT_DISALLOWED_TOOLS: new Set(),
   IN_PROCESS_TEAMMATE_ALLOWED_TOOLS: new Set(),
+  COORDINATOR_MODE_ALLOWED_TOOLS: new Set(),
+  CORE_TOOLS: new Set(),
 }))
 
 mock.module('src/services/AgentSummary/agentSummary.js', () => ({
@@ -30,51 +32,33 @@ mock.module('src/services/analytics/index.js', () => ({
   AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS: undefined,
 }))
 
+const realDumpPrompts = await import('src/services/api/dumpPrompts.js')
 mock.module('src/services/api/dumpPrompts.js', () => ({
+  ...realDumpPrompts,
   clearDumpState: noop,
 }))
 
+// Tool.js exports many helpers; spread the real module and override only what
+// this test needs so the mock stays complete for downstream test files.
+const realTool = await import('src/Tool.js')
 mock.module('src/Tool.js', () => ({
+  ...realTool,
   toolMatchesName: () => false,
   findToolByName: noop,
 }))
 
-// messages.ts is complex - provide stubs for all named exports
+// messages.ts has many exports; spread the real module and override only the
+// functions this test cares about so later test files see complete exports.
+const realMessages = await import('src/utils/messages.js')
 mock.module('src/utils/messages.ts', () => ({
+  ...realMessages,
   extractTextContent: (content: any[]) =>
     content
       ?.filter?.((b: any) => b.type === 'text')
       ?.map?.((b: any) => b.text)
       ?.join('') ?? '',
   getLastAssistantMessage: () => null,
-  SYNTHETIC_MESSAGES: new Set(),
-  INTERRUPT_MESSAGE: '',
-  INTERRUPT_MESSAGE_FOR_TOOL_USE: '',
-  CANCEL_MESSAGE: '',
-  REJECT_MESSAGE: '',
-  REJECT_MESSAGE_WITH_REASON_PREFIX: '',
-  SUBAGENT_REJECT_MESSAGE: '',
-  SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX: '',
-  PLAN_REJECTION_PREFIX: '',
-  DENIAL_WORKAROUND_GUIDANCE: '',
-  NO_RESPONSE_REQUESTED: '',
-  SYNTHETIC_TOOL_RESULT_PLACEHOLDER: '',
-  SYNTHETIC_MODEL: '',
-  AUTO_REJECT_MESSAGE: noop,
-  DONT_ASK_REJECT_MESSAGE: noop,
-  withMemoryCorrectionHint: (s: string) => s,
-  deriveShortMessageId: () => '',
-  isClassifierDenial: () => false,
-  buildYoloRejectionMessage: () => '',
-  buildClassifierUnavailableMessage: () => '',
-  isEmptyMessageText: () => true,
-  createAssistantMessage: noop,
-  createAssistantAPIErrorMessage: noop,
   createUserMessage: noop,
-  prepareUserContent: noop,
-  createUserInterruptionMessage: noop,
-  createSyntheticUserCaveatMessage: noop,
-  formatCommandInputTags: noop,
 }))
 
 mock.module('src/tasks/LocalAgentTask/LocalAgentTask.js', () => ({
@@ -113,7 +97,16 @@ mock.module('src/utils/errors.js', () => ({
   classifyAxiosError: () => ({ category: 'unknown' }),
 }))
 
-mock.module('src/utils/forkedAgent.js', () => ({}))
+mock.module('src/utils/forkedAgent.js', () => ({
+  saveCacheSafeParams: noop,
+  getLastCacheSafeParams: () => null,
+  createCacheSafeParams: noop,
+  createGetAppStateWithAllowedTools: () => noop,
+  prepareForkedCommandContext: async () => ({}),
+  extractResultText: () => '',
+  createSubagentContext: () => ({}),
+  runForkedAgent: async () => ({ messages: [], totalUsage: {} }),
+}))
 
 mock.module('src/utils/permissions/yoloClassifier.js', () => ({
   buildTranscriptForClassifier: () => '',
@@ -126,6 +119,7 @@ mock.module('src/utils/task/sdkProgress.js', () => ({
 
 mock.module('src/utils/tokens.js', () => ({
   getTokenCountFromUsage: () => 0,
+  tokenCountWithEstimation: () => 0,
 }))
 
 mock.module('src/tools/ExitPlanModeTool/constants.js', () => ({
@@ -139,10 +133,18 @@ mock.module('src/tools/AgentTool/constants.js', () => ({
 
 mock.module('src/tools/AgentTool/loadAgentsDir.js', () => ({}))
 
-mock.module('src/state/AppState.js', () => ({}))
+mock.module('src/state/AppState.js', () => ({
+  AppStoreContext: {},
+  AppStateProvider: () => null,
+  useAppState: () => ({}),
+  useSetAppState: () => () => {},
+  useAppStateStore: () => ({}),
+  useAppStateMaybeOutsideOfProvider: () => undefined,
+}))
 
 mock.module('src/types/ids.js', () => ({
   asAgentId: (id: string) => id,
+  asSessionId: (id: string) => id,
 }))
 
 // Break circular dep

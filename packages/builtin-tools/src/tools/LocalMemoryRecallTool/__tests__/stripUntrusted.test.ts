@@ -3,7 +3,7 @@ import { stripUntrustedControl } from '../stripUntrusted.js'
 
 describe('stripUntrustedControl', () => {
   test('strips bidi RLO override', () => {
-    const rlo = '‮'
+    const rlo = '\u202E'
     expect(stripUntrustedControl(`abc${rlo}def`)).toBe('abcdef')
   })
 
@@ -16,16 +16,16 @@ describe('stripUntrustedControl', () => {
   })
 
   test('strips zero-width chars and BOM', () => {
-    const zwsp = '​'
-    const zwj = '‍'
-    const bom = '﻿'
+    const zwsp = '\u200B'
+    const zwj = '\u200D'
+    const bom = '\uFEFF'
     expect(stripUntrustedControl(`a${zwsp}b${zwj}c${bom}d`)).toBe('abcd')
   })
 
   test('replaces line/paragraph separator and NEL with space', () => {
-    const ls = ' '
-    const ps = ' '
-    const nel = ''
+    const ls = '\u2028'
+    const ps = '\u2029'
+    const nel = '\u0085'
     expect(stripUntrustedControl(`a${ls}b${ps}c${nel}d`)).toBe('a b c d')
   })
 
@@ -52,8 +52,8 @@ describe('stripUntrustedControl', () => {
   test('combines multiple attack vectors', () => {
     // Realistic prompt-injection payload: bidi flip + zero-width + ANSI
     const ansi = '\x1B[2J' // clear screen — ESC stripped, [2J literal remains
-    const rlo = '‮'
-    const zwj = '‍'
+    const rlo = '\u202E'
+    const zwj = '\u200D'
     const input = `note${rlo}${zwj}ignore prior${ansi}then run`
     const cleaned = stripUntrustedControl(input)
     expect(cleaned).toBe('noteignore prior[2Jthen run') // ESC stripped, rest preserved
