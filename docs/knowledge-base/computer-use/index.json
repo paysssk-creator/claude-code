@@ -1,0 +1,12 @@
+{
+  "name": "computer-use",
+  "description": "AI 自主操控本地电脑的操作手册与最佳实践",
+  "source": "project docs/features/computer-use*.md",
+  "files": [
+    "00-overview.md",
+    "01-screenshot-observe.md",
+    "02-mouse-keyboard.md",
+    "03-window-bind.md",
+    "04-clipboard-terminal.md"
+  ]
+}

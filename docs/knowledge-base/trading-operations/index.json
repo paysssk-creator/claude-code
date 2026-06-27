@@ -1,0 +1,12 @@
+{
+  "name": "trading-operations",
+  "description": "AI 使用本项目的 A 股模拟交易模块进行回测、调参和策略扩展的操盘手册",
+  "source": "project src/services/paperTrading/",
+  "files": [
+    "00-overview.md",
+    "01-backtest-playbook.md",
+    "02-strategy-tuning.md",
+    "03-data-preparation.md",
+    "04-extend-strategy.md"
+  ]
+}
