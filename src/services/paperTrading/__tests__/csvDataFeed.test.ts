@@ -48,4 +48,34 @@ describe('loadCsvDataFeed', () => {
 
     rmSync(dir, { recursive: true, force: true })
   })
+
+  test('throws when low is not the minimum', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'paper-trading-'))
+    const path = join(dir, 'data.csv')
+    writeFileSync(path, '000001,2026-06-28,10,11,12,10,1000\n')
+
+    expect(() => loadCsvDataFeed(path)).toThrow('Low price is not the minimum')
+
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  test('throws when high is not the maximum', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'paper-trading-'))
+    const path = join(dir, 'data.csv')
+    writeFileSync(path, '000001,2026-06-28,12,11,9,10,1000\n')
+
+    expect(() => loadCsvDataFeed(path)).toThrow('High price is not the maximum')
+
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  test('throws on negative volume', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'paper-trading-'))
+    const path = join(dir, 'data.csv')
+    writeFileSync(path, '000001,2026-06-28,10,11,9,10,-1000\n')
+
+    expect(() => loadCsvDataFeed(path)).toThrow('Volume cannot be negative')
+
+    rmSync(dir, { recursive: true, force: true })
+  })
 })

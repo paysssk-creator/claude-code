@@ -1,3 +1,4 @@
+import { writeFileSync } from 'node:fs'
 import type { Broker, MarketData, Strategy, StrategySignal } from '../types.js'
 import type { RiskManager } from '../risk/riskManager.js'
 
@@ -162,4 +163,60 @@ export function runBacktest(options: BacktestOptions): BacktestResult {
     totalTrades: closedTrades.length,
     benchmarkReturnPct,
   }
+}
+
+export interface BacktestExport {
+  summary: {
+    totalReturnPct: number
+    benchmarkReturnPct: number
+    maxDrawdownPct: number
+    sharpeRatio: number
+    winRatePct: number
+    totalTrades: number
+  }
+  equityCurve: { timestamp: string; totalValue: number }[]
+  signals: { symbol: string; side: string; quantity: number; reason: string }[]
+  trades: {
+    timestamp: string
+    symbol: string
+    side: string
+    quantity: number
+    price: number
+    pnl: number
+  }[]
+}
+
+export function exportBacktestResult(
+  result: BacktestResult,
+  outputPath: string,
+): void {
+  const exportData: BacktestExport = {
+    summary: {
+      totalReturnPct: result.totalReturnPct,
+      benchmarkReturnPct: result.benchmarkReturnPct,
+      maxDrawdownPct: result.maxDrawdownPct,
+      sharpeRatio: result.sharpeRatio,
+      winRatePct: result.winRatePct,
+      totalTrades: result.totalTrades,
+    },
+    equityCurve: result.equityCurve.map(point => ({
+      timestamp: point.timestamp.toISOString(),
+      totalValue: point.totalValue,
+    })),
+    signals: result.signals.map(signal => ({
+      symbol: signal.symbol,
+      side: signal.side,
+      quantity: signal.quantity,
+      reason: signal.reason,
+    })),
+    trades: result.trades.map(trade => ({
+      timestamp: trade.timestamp.toISOString(),
+      symbol: trade.symbol,
+      side: trade.side,
+      quantity: trade.quantity,
+      price: trade.price,
+      pnl: trade.pnl,
+    })),
+  }
+  writeFileSync(outputPath, JSON.stringify(exportData, null, 2), 'utf-8')
 }

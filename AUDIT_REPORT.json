@@ -15,7 +15,19 @@
     "纸面交易已集成 A 股费用模型与权益曲线",
     "纸面交易已添加风控与回测引擎",
     "修复非 Voice 构建下 VoiceContext 运行时崩溃",
-    "CLI 子命令与 RCS 启动能力已验证"
+    "CLI 子命令与 RCS 启动能力已验证",
+    "CSV 历史行情数据源已添加并通过测试",
+    "MomentumStrategy 已添加止损选项",
+    "PaperBroker 已添加 A 股 ±10% 涨跌停限制",
+    "回测引擎已添加夏普比率、胜率、交易 P&L、买入持有基准",
+    "BasicRiskManager 已添加回撤熔断",
+    "已添加 claude paper-trade CLI 子命令",
+    "生产构建产物可运行 paper-trade 命令",
+    "Reprise-Hosting 外部资料本地知识库已建立",
+    "computer-use 与 trading-operations 本地知识库已建立",
+    "浏览器操作规则已加入 knowledge base（操作前必须先截图）",
+    "CSV OHLCV 数据已添加合法性校验（高低点/负成交量）",
+    "回测结果已支持导出为 JSON（--output）"
   ],
   "warnings": [
     {
@@ -28,10 +40,11 @@
     }
   ],
   "failed": [],
-  "timestamp": "2026-06-28T00:00:00.000Z",
-  "paperTradeDemoStatus": "T+1 sell logic verified, fees/equity/risk/backtest integrated, VoiceContext fixed, CLI/RCS verified, demo runs clean",
+  "timestamp": "2026-06-28T04:25:00.000Z",
+  "paperTradeDemoStatus": "T+1 sell logic verified, fees/equity/risk/backtest integrated, price limits, CSV feed, stop-loss, drawdown circuit breaker, Sharpe/win rate/benchmark metrics integrated, CLI paper-trade command verified in production build, CSV OHLCV validation and JSON export added",
+  "knowledgeBaseStatus": "Reprise-Hosting archives (79 files), computer-use playbooks (6 files), trading-operations playbooks (5 files) available locally; browser screenshot-before-action rule enforced",
   "summary": {
-    "passed": 15,
+    "passed": 29,
     "warnings": 2,
     "failed": 0
   }

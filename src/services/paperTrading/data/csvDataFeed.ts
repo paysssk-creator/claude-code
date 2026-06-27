@@ -34,6 +34,18 @@ function parseDate(value: string): Date {
   return date
 }
 
+function validateOhlcv(row: CsvRow, line: string): void {
+  if (row.low > row.open || row.low > row.high || row.low > row.close) {
+    throw new Error(`Low price is not the minimum in CSV line: ${line}`)
+  }
+  if (row.high < row.open || row.high < row.close) {
+    throw new Error(`High price is not the maximum in CSV line: ${line}`)
+  }
+  if (row.volume < 0) {
+    throw new Error(`Volume cannot be negative in CSV line: ${line}`)
+  }
+}
+
 function parseLine(line: string): CsvRow | null {
   const trimmed = line.trim()
   if (!trimmed || trimmed.startsWith('#')) {
@@ -50,7 +62,7 @@ function parseLine(line: string): CsvRow | null {
     throw new Error(`Missing symbol or date in CSV line: ${line}`)
   }
 
-  return {
+  const row: CsvRow = {
     symbol: symbol.trim(),
     timestamp: parseDate(date.trim()),
     open: parseNumber(open.trim()),
@@ -59,6 +71,8 @@ function parseLine(line: string): CsvRow | null {
     close: parseNumber(close.trim()),
     volume: parseNumber(volume.trim()),
   }
+  validateOhlcv(row, line)
+  return row
 }
 
 /**

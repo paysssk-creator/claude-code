@@ -5487,6 +5487,7 @@ Examples:
     .option('--profit <threshold>', 'Take-profit threshold as a fraction', '0.05')
     .option('--stop-loss <threshold>', 'Stop-loss threshold as a fraction')
     .option('--max-drawdown <threshold>', 'Halt new orders after this drawdown fraction')
+    .option('--output <path>', 'Export backtest result to JSON file')
     .action(
       async (options: {
         csv?: string;
@@ -5495,6 +5496,7 @@ Examples:
         profit?: string;
         stopLoss?: string;
         maxDrawdown?: string;
+        output?: string;
       }) => {
         const { paperTradeHandler } = await import('./cli/handlers/paperTrade.js');
         await paperTradeHandler(options);

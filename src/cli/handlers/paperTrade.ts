@@ -12,6 +12,7 @@ import {
   BasicRiskManager,
   MomentumStrategy,
   PaperBroker,
+  exportBacktestResult,
   loadCsvDataFeed,
   runBacktest,
 } from '../../services/paperTrading/index.js'
@@ -24,6 +25,7 @@ export interface PaperTradeOptions {
   profit?: string
   stopLoss?: string
   maxDrawdown?: string
+  output?: string
 }
 
 export async function paperTradeHandler(
@@ -37,6 +39,7 @@ export async function paperTradeHandler(
     options.stopLoss === undefined ? undefined : Number(options.stopLoss)
   const maxDrawdownPct =
     options.maxDrawdown === undefined ? undefined : Number(options.maxDrawdown)
+  const outputPath = options.output ? resolve(options.output) : undefined
 
   if (Number.isNaN(initialCash) || initialCash <= 0) {
     throw new Error(`Invalid initial cash: ${options.cash}`)
@@ -160,5 +163,10 @@ export async function paperTradeHandler(
     console.log(
       `${order.id}: ${order.side} ${order.quantity} ${order.symbol} @ ${order.status}${order.fee ? ` (fee ¥${order.fee.toFixed(2)})` : ''}${order.rejectReason ? ` (${order.rejectReason})` : ''}`,
     )
+  }
+
+  if (outputPath) {
+    exportBacktestResult(result, outputPath)
+    console.log(`\nBacktest result exported to ${outputPath}`)
   }
 }
