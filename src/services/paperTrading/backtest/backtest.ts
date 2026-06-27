@@ -1,11 +1,24 @@
 import type { Broker, MarketData, Strategy, StrategySignal } from '../types.js'
 import type { RiskManager } from '../risk/riskManager.js'
 
+export interface TradeRecord {
+  timestamp: Date
+  symbol: string
+  side: 'buy' | 'sell'
+  quantity: number
+  price: number
+  pnl: number
+}
+
 export interface BacktestResult {
   equityCurve: { timestamp: Date; totalValue: number }[]
   signals: StrategySignal[]
+  trades: TradeRecord[]
   totalReturnPct: number
   maxDrawdownPct: number
+  sharpeRatio: number
+  winRatePct: number
+  totalTrades: number
 }
 
 export interface BacktestOptions {
@@ -38,6 +51,8 @@ export function runBacktest(options: BacktestOptions): BacktestResult {
   } = options
   const equityCurve: { timestamp: Date; totalValue: number }[] = []
   const signals: StrategySignal[] = []
+  const trades: TradeRecord[] = []
+  const buyPrices = new Map<string, number>()
 
   let peak = broker.getPortfolio().totalValue
 
@@ -51,13 +66,31 @@ export function runBacktest(options: BacktestOptions): BacktestResult {
         riskManager?.approve(signal, data, broker.getPortfolio()) ?? signal
       if (!approved) continue
 
-      broker.placeOrder({
+      const order = broker.placeOrder({
         symbol: approved.symbol,
         side: approved.side,
         type: 'market',
         quantity: approved.quantity,
       })
       signals.push(approved)
+
+      if (order.status === 'filled') {
+        const price = order.price ?? data.close
+        if (order.side === 'buy') {
+          buyPrices.set(order.symbol, price)
+        } else {
+          const entryPrice = buyPrices.get(order.symbol) ?? price
+          const pnl = (price - entryPrice) * order.quantity
+          trades.push({
+            timestamp: order.timestamp,
+            symbol: order.symbol,
+            side: order.side,
+            quantity: order.quantity,
+            price,
+            pnl,
+          })
+        }
+      }
     }
 
     onDayEnd?.(broker, date)
@@ -79,10 +112,35 @@ export function runBacktest(options: BacktestOptions): BacktestResult {
     return Math.max(max, drawdown)
   }, 0)
 
+  const returns = equityCurve.slice(1).map((point, i) => {
+    const prev = equityCurve[i]?.totalValue ?? initialValue
+    return prev === 0 ? 0 : (point.totalValue - prev) / prev
+  })
+  const meanReturn =
+    returns.length === 0
+      ? 0
+      : returns.reduce((a, b) => a + b, 0) / returns.length
+  const variance =
+    returns.length === 0
+      ? 0
+      : returns.reduce((sum, r) => sum + (r - meanReturn) ** 2, 0) /
+        returns.length
+  const stdDev = Math.sqrt(variance)
+  const sharpeRatio = stdDev === 0 ? 0 : meanReturn / stdDev
+
+  const closedTrades = trades.filter(t => t.side === 'sell')
+  const winningTrades = closedTrades.filter(t => t.pnl > 0)
+  const winRatePct =
+    closedTrades.length === 0 ? 0 : winningTrades.length / closedTrades.length
+
   return {
     equityCurve,
     signals,
+    trades,
     totalReturnPct,
     maxDrawdownPct,
+    sharpeRatio,
+    winRatePct,
+    totalTrades: closedTrades.length,
   }
 }

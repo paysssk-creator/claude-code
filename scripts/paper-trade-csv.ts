@@ -88,11 +88,21 @@ console.log(`Total turnover: ¥${stats.totalTurnover.toFixed(2)}`)
 console.log(`Total fees: ¥${stats.totalFees.toFixed(2)}`)
 console.log(`Total return: ${(result.totalReturnPct * 100).toFixed(2)}%`)
 console.log(`Max drawdown: ${(result.maxDrawdownPct * 100).toFixed(2)}%`)
+console.log(`Sharpe ratio: ${result.sharpeRatio.toFixed(3)}`)
+console.log(`Win rate: ${(result.winRatePct * 100).toFixed(2)}%`)
+console.log(`Total trades: ${result.totalTrades}`)
 
 console.log('\n--- Equity curve ---')
 for (const point of result.equityCurve) {
   console.log(
     `${point.timestamp.toISOString().slice(0, 10)}: ¥${point.totalValue.toFixed(2)}`,
+  )
+}
+
+console.log('\n--- Closed trades ---')
+for (const trade of result.trades) {
+  console.log(
+    `${trade.timestamp.toISOString().slice(0, 10)} ${trade.symbol}: ${trade.side.toUpperCase()} ${trade.quantity} @ ¥${trade.price.toFixed(2)} P&L ¥${trade.pnl.toFixed(2)}`,
   )
 }
 

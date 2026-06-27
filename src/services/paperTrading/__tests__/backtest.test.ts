@@ -11,7 +11,7 @@ describe('runBacktest', () => {
       new Date('2026-06-29'),
       new Date('2026-06-30'),
     ]
-    const closes = [10, 9.5, 11]
+    const closes = [10, 9.5, 10.4]
     const broker = new PaperBroker({
       initialCash: 100_000,
       marketData: new Map([
@@ -49,5 +49,54 @@ describe('runBacktest', () => {
     expect(result.signals.length).toBeGreaterThan(0)
     expect(result.totalReturnPct).not.toBeNaN()
     expect(result.maxDrawdownPct).toBeGreaterThanOrEqual(0)
+    expect(result.sharpeRatio).not.toBeNaN()
+    expect(result.winRatePct).toBeGreaterThanOrEqual(0)
+    expect(result.totalTrades).toBeGreaterThan(0)
+  })
+
+  test('reports closed trade P&L', () => {
+    const symbol = '000001'
+    const dates = [
+      new Date('2026-06-28'),
+      new Date('2026-06-29'),
+      new Date('2026-06-30'),
+    ]
+    const closes = [10, 9.5, 10.4]
+    const broker = new PaperBroker({
+      initialCash: 100_000,
+      marketData: new Map([
+        [
+          symbol,
+          makeAshareMarketData(symbol, closes[0]!, { timestamp: dates[0] }),
+        ],
+      ]),
+      enforceT1: false,
+    })
+    const strategy = new MomentumStrategy({
+      dipThreshold: 0.03,
+      profitThreshold: 0.05,
+      lotSize: 100,
+    })
+
+    const result = runBacktest({
+      broker,
+      strategy,
+      symbols: [symbol],
+      dates,
+      updateMarketData: (date, sym) => {
+        const index = dates.findIndex(
+          d => d.toISOString().slice(0, 10) === date.toISOString().slice(0, 10),
+        )
+        const data = makeAshareMarketData(sym, closes[index]!, {
+          timestamp: date,
+        })
+        broker.setMarketData(sym, data)
+        return data
+      },
+    })
+
+    const sellTrades = result.trades.filter(t => t.side === 'sell')
+    expect(sellTrades.length).toBeGreaterThan(0)
+    expect(sellTrades[0]?.pnl).not.toBeNaN()
   })
 })
