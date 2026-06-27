@@ -2,6 +2,7 @@ import { isRemoteManagedSettingsEligible } from '../services/remoteManagedSettin
 import { clearCACertsCache } from './caCerts.js'
 import { getGlobalConfig } from './config.js'
 import { isEnvTruthy } from './envUtils.js'
+import { loadStoredApiKeysIntoEnv } from './apiKeyManager.js'
 import {
   isProviderManagedEnvVar,
   SAFE_ENV_VARS,
@@ -175,6 +176,11 @@ export function applySafeConfigEnvironmentVariables(): void {
       process.env[key] = value
     }
   }
+
+  // Finally, inject any API keys stored in secure storage that are not already
+  // present in the environment. Existing env vars (including settings.env) take
+  // precedence over stored keys.
+  loadStoredApiKeysIntoEnv()
 }
 
 /**

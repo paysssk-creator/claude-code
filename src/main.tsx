@@ -4942,6 +4942,55 @@ async function run(): Promise<CommanderCommand> {
       await authLogout();
     });
 
+  // claude keys
+
+  const keys = program
+    .command('keys')
+    .alias('key')
+    .description('Manage stored API keys for third-party providers')
+    .configureHelp(createSortedHelpConfig());
+
+  keys
+    .command('set <provider> <key>')
+    .description('Store an API key for a provider (anthropic, openai, gemini, grok)')
+    .action(async (provider: string, key: string) => {
+      const { keysSetHandler } = await import('./cli/handlers/keys.js');
+      keysSetHandler(provider, key);
+    });
+
+  keys
+    .command('get <provider>')
+    .description('Show whether a stored API key is configured (value is masked)')
+    .action(async (provider: string) => {
+      const { keysGetHandler } = await import('./cli/handlers/keys.js');
+      keysGetHandler(provider);
+    });
+
+  keys
+    .command('list')
+    .description('List providers with stored API keys')
+    .action(async () => {
+      const { keysListHandler } = await import('./cli/handlers/keys.js');
+      keysListHandler();
+    });
+
+  keys
+    .command('remove <provider>')
+    .description('Remove a stored API key')
+    .option('-y, --yes', 'Skip confirmation')
+    .action(async (provider: string, options: { yes?: boolean }) => {
+      const { keysRemoveHandler } = await import('./cli/handlers/keys.js');
+      await keysRemoveHandler(provider, options);
+    });
+
+  keys
+    .command('configure')
+    .description('Interactively configure API keys for all supported providers')
+    .action(async () => {
+      const { keysConfigureHandler } = await import('./cli/handlers/keys.js');
+      await keysConfigureHandler();
+    });
+
   /**
    * Helper function to handle marketplace command errors consistently.
    * Logs the error and exits the process with status 1.

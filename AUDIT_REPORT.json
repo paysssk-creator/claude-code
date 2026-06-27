@@ -27,7 +27,8 @@
     "computer-use 与 trading-operations 本地知识库已建立",
     "浏览器操作规则已加入 knowledge base（操作前必须先截图）",
     "CSV OHLCV 数据已添加合法性校验（高低点/负成交量）",
-    "回测结果已支持导出为 JSON（--output）"
+    "回测结果已支持导出为 JSON（--output）",
+    "本地安全 API 密钥管理器已添加（claude keys）"
   ],
   "warnings": [
     {
@@ -43,8 +44,9 @@
   "timestamp": "2026-06-28T04:25:00.000Z",
   "paperTradeDemoStatus": "T+1 sell logic verified, fees/equity/risk/backtest integrated, price limits, CSV feed, stop-loss, drawdown circuit breaker, Sharpe/win rate/benchmark metrics integrated, CLI paper-trade command verified in production build, CSV OHLCV validation and JSON export added",
   "knowledgeBaseStatus": "Reprise-Hosting archives (79 files), computer-use playbooks (6 files), trading-operations playbooks (5 files) available locally; browser screenshot-before-action rule enforced",
+  "keyManagerStatus": "claude keys set/get/list/remove/configure implemented; keys stored in secureStorage (macOS keychain + plaintext fallback); auto-injected into process.env at startup; 5411 tests pass",
   "summary": {
-    "passed": 29,
+    "passed": 30,
     "warnings": 2,
     "failed": 0
   }
