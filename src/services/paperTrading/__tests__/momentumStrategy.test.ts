@@ -68,4 +68,39 @@ describe('MomentumStrategy', () => {
     expect(signal?.side).toBe('sell')
     expect(broker.getPortfolio().positions).toHaveLength(0)
   })
+
+  test('emits sell signal on stop loss', () => {
+    const data = makeAshareDataMap({ '000001': 10 })
+    const broker = new PaperBroker({
+      initialCash: 100_000,
+      marketData: data,
+      enforceT1: false,
+    })
+    const strategy = new MomentumStrategy({
+      dipThreshold: 0.05,
+      profitThreshold: 0.1,
+      stopLossThreshold: 0.05,
+      lotSize: 100,
+    })
+
+    broker.placeOrder({
+      symbol: '000001',
+      side: 'buy',
+      type: 'market',
+      quantity: 100,
+    })
+
+    // Price drops 8% -> stop loss
+    data.set('000001', {
+      ...data.get('000001')!,
+      close: 9.2,
+    })
+
+    strategy.evaluate(data.get('000001')!, broker.getPortfolio())
+    const signal = runStrategyTick(broker, strategy, '000001')
+
+    expect(signal?.side).toBe('sell')
+    expect(signal?.reason).toContain('Stop loss')
+    expect(broker.getPortfolio().positions).toHaveLength(0)
+  })
 })

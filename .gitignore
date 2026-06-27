@@ -35,6 +35,10 @@ __pycache__/
 logs
 
 data
+!src/services/paperTrading/data/
+!src/services/paperTrading/data/**
+!scripts/data/
+!scripts/data/**
 .omc
 .codex/*
 !.codex/agents/

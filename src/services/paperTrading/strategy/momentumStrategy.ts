@@ -11,7 +11,9 @@ export interface MomentumStrategyOptions {
   dipThreshold: number
   /** Sell when price rises by at least this fraction from average cost. */
   profitThreshold: number
-  /** Fixed number of shares per signal. */
+  /** Sell when unrealized loss reaches at least this fraction of average cost. */
+  stopLossThreshold?: number
+  /** Fixed number shares per signal. */
   lotSize: number
 }
 
@@ -34,6 +36,16 @@ export class MomentumStrategy implements Strategy {
           side: 'sell',
           quantity: position.quantity,
           reason: `Take profit: +${(gain * 100).toFixed(1)}%`,
+        }
+      }
+
+      const stopLoss = this.options.stopLossThreshold
+      if (stopLoss !== undefined && gain <= -stopLoss) {
+        return {
+          symbol: data.symbol,
+          side: 'sell',
+          quantity: position.quantity,
+          reason: `Stop loss: ${(gain * 100).toFixed(1)}%`,
         }
       }
     }

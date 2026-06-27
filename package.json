@@ -67,7 +67,8 @@
     "typecheck": "tsc --noEmit",
     "precheck": "bun run typecheck && bun run check:fix && bun test",
     "rcs": "bun run scripts/rcs.ts",
-    "paper-trade:demo": "bun run scripts/paper-trade-demo.ts"
+    "paper-trade:demo": "bun run scripts/paper-trade-demo.ts",
+    "paper-trade:csv": "bun run scripts/paper-trade-csv.ts"
   },
   "dependencies": {
     "@agentclientprotocol/sdk": "^0.19.0",
