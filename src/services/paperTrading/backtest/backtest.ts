@@ -19,6 +19,8 @@ export interface BacktestResult {
   sharpeRatio: number
   winRatePct: number
   totalTrades: number
+  /** Return of an equal-weight buy-and-hold portfolio over the same period. */
+  benchmarkReturnPct: number
 }
 
 export interface BacktestOptions {
@@ -55,10 +57,16 @@ export function runBacktest(options: BacktestOptions): BacktestResult {
   const buyPrices = new Map<string, number>()
 
   let peak = broker.getPortfolio().totalValue
+  const initialPrices = new Map<string, number>()
+  const finalPrices = new Map<string, number>()
 
   for (const date of dates) {
     for (const symbol of symbols) {
       const data = updateMarketData(date, symbol)
+      if (!initialPrices.has(symbol)) {
+        initialPrices.set(symbol, data.close)
+      }
+      finalPrices.set(symbol, data.close)
       const signal = strategy.evaluate(data, broker.getPortfolio())
       if (!signal) continue
 
@@ -133,6 +141,16 @@ export function runBacktest(options: BacktestOptions): BacktestResult {
   const winRatePct =
     closedTrades.length === 0 ? 0 : winningTrades.length / closedTrades.length
 
+  const validSymbols = symbols.filter(symbol => initialPrices.has(symbol))
+  const benchmarkReturnPct =
+    validSymbols.length === 0
+      ? 0
+      : validSymbols.reduce((sum, symbol) => {
+          const initial = initialPrices.get(symbol) ?? 0
+          const final = finalPrices.get(symbol) ?? 0
+          return initial === 0 ? sum : sum + (final - initial) / initial
+        }, 0) / validSymbols.length
+
   return {
     equityCurve,
     signals,
@@ -142,5 +160,6 @@ export function runBacktest(options: BacktestOptions): BacktestResult {
     sharpeRatio,
     winRatePct,
     totalTrades: closedTrades.length,
+    benchmarkReturnPct,
   }
 }

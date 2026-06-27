@@ -52,6 +52,7 @@ describe('runBacktest', () => {
     expect(result.sharpeRatio).not.toBeNaN()
     expect(result.winRatePct).toBeGreaterThanOrEqual(0)
     expect(result.totalTrades).toBeGreaterThan(0)
+    expect(result.benchmarkReturnPct).not.toBeNaN()
   })
 
   test('reports closed trade P&L', () => {

@@ -27,6 +27,7 @@ describe('paperTradeHandler', () => {
     expect(output).toContain('Closed trades')
     expect(output).toContain('Final orders')
     expect(output).toContain('Total return:')
+    expect(output).toContain('Benchmark return:')
     expect(output).toContain('Sharpe ratio:')
   })
 

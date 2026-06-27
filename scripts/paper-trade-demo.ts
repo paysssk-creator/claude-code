@@ -92,6 +92,9 @@ console.log('\n--- Trading statistics ---')
 console.log(`Total turnover: ¥${stats.totalTurnover.toFixed(2)}`)
 console.log(`Total fees: ¥${stats.totalFees.toFixed(2)}`)
 console.log(`Total return: ${(result.totalReturnPct * 100).toFixed(2)}%`)
+console.log(
+  `Benchmark return: ${(result.benchmarkReturnPct * 100).toFixed(2)}%`,
+)
 console.log(`Max drawdown: ${(result.maxDrawdownPct * 100).toFixed(2)}%`)
 console.log(`Sharpe ratio: ${result.sharpeRatio.toFixed(3)}`)
 console.log(`Win rate: ${(result.winRatePct * 100).toFixed(2)}%`)

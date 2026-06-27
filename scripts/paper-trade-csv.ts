@@ -13,6 +13,7 @@ import {
   loadCsvDataFeed,
   runBacktest,
 } from '../src/services/paperTrading/index.js'
+import type { MarketData } from '../src/services/paperTrading/types.js'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
@@ -22,9 +23,14 @@ const __dirname = dirname(__filename)
 const csvPath = join(__dirname, 'data', 'sample-ohlcv.csv')
 const feed = loadCsvDataFeed(csvPath)
 
-const marketData = new Map<string, ReturnType<typeof feed.get>>(
-  feed.symbols.map(symbol => [symbol, feed.get(feed.dates[0]!, symbol)!]),
-)
+const initialDate = feed.dates[0]!
+const marketData = new Map<string, MarketData>()
+for (const symbol of feed.symbols) {
+  const data = feed.get(initialDate, symbol)
+  if (data) {
+    marketData.set(symbol, data)
+  }
+}
 
 const broker = new PaperBroker({
   initialCash: 100_000,
@@ -87,6 +93,9 @@ console.log(`Symbols: ${feed.symbols.join(', ')}`)
 console.log(`Total turnover: ¥${stats.totalTurnover.toFixed(2)}`)
 console.log(`Total fees: ¥${stats.totalFees.toFixed(2)}`)
 console.log(`Total return: ${(result.totalReturnPct * 100).toFixed(2)}%`)
+console.log(
+  `Benchmark return: ${(result.benchmarkReturnPct * 100).toFixed(2)}%`,
+)
 console.log(`Max drawdown: ${(result.maxDrawdownPct * 100).toFixed(2)}%`)
 console.log(`Sharpe ratio: ${result.sharpeRatio.toFixed(3)}`)
 console.log(`Win rate: ${(result.winRatePct * 100).toFixed(2)}%`)
