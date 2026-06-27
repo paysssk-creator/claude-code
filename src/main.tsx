@@ -5477,6 +5477,30 @@ Examples:
       });
   }
 
+  // claude paper-trade — A-share paper trading backtest
+  program
+    .command('paper-trade')
+    .description('Run an A-share paper-trading backtest from a CSV file')
+    .option('--csv <path>', 'Path to OHLCV CSV file', 'scripts/data/sample-ohlcv.csv')
+    .option('--cash <amount>', 'Initial cash', '100000')
+    .option('--dip <threshold>', 'Buy dip threshold as a fraction', '0.03')
+    .option('--profit <threshold>', 'Take-profit threshold as a fraction', '0.05')
+    .option('--stop-loss <threshold>', 'Stop-loss threshold as a fraction')
+    .option('--max-drawdown <threshold>', 'Halt new orders after this drawdown fraction')
+    .action(
+      async (options: {
+        csv?: string;
+        cash?: string;
+        dip?: string;
+        profit?: string;
+        stopLoss?: string;
+        maxDrawdown?: string;
+      }) => {
+        const { paperTradeHandler } = await import('./cli/handlers/paperTrade.js');
+        await paperTradeHandler(options);
+      },
+    );
+
   profileCheckpoint('run_before_parse');
   await program.parseAsync(process.argv);
   profileCheckpoint('run_after_parse');
