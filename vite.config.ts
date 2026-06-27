@@ -70,11 +70,10 @@ export default defineConfig({
   ssr: {
     target: 'node',
     noExternal: true,
-    // Packages with runtime require.resolve() or WASM binaries can't be
-    // inlined into the bundle — they must be resolved from node_modules
-    // at runtime.  doubaoime-asr uses opus-encdec which does
-    // require.resolve('opus-encdec/dist/libopus-encoder.wasm.js').
-    external: ['doubaoime-asr', 'opus-encdec'],
+    // Packages with runtime require.resolve(), WASM binaries, or native
+    // .node addons can't be inlined into the bundle — they must be resolved
+    // from node_modules at runtime.
+    external: ['doubaoime-asr', 'opus-encdec', '@napi-rs/keyring'],
   },
 
   build: {
