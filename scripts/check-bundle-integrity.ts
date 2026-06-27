@@ -112,10 +112,12 @@ async function main() {
 
   console.log(`\n🔍 检查构建产物完整性: ${distDir}\n`)
 
-  // 1. 列出所有 chunk 文件
+  // 1. 列出所有 chunk 文件和原生 .node 插件
   let files: string[]
   try {
-    files = (await readdir(distDir)).filter(f => f.endsWith('.js'))
+    files = (await readdir(distDir)).filter(
+      f => f.endsWith('.js') || f.endsWith('.node'),
+    )
   } catch {
     console.error(`❌ 无法读取目录: ${distDir}`)
     console.error('   请先运行 bun run build')
@@ -123,7 +125,10 @@ async function main() {
   }
 
   const fileSet = new Set(files)
-  console.log(`📦 找到 ${files.length} 个 JS 文件\n`)
+  const jsFiles = files.filter(f => f.endsWith('.js'))
+  console.log(
+    `📦 找到 ${jsFiles.length} 个 JS 文件, ${files.length - jsFiles.length} 个原生插件\n`,
+  )
 
   const findings: Finding[] = []
 
@@ -161,6 +166,20 @@ async function main() {
         const mod = m[1]
         // 跳过 ObjC.import（JXA 语法，不是真正的 require）
         if (NATIVE_FRAMEWORKS.has(mod)) continue
+        // 相对路径引用（含原生 .node 插件）只要文件存在于 dist/ 即为合法
+        if (mod.startsWith('./') || mod.startsWith('../')) {
+          const refFile = mod.replace(/^\.\.?\//, '')
+          if (fileSet.has(refFile)) continue
+          findings.push({
+            type: 'broken-chunk-ref',
+            severity: 'error',
+            file,
+            line: lineNum,
+            module: mod,
+            snippet: line.trim().slice(0, 120),
+          })
+          continue
+        }
         if (
           NODE_BUILTINS.has(mod) ||
           NODE_18_PLUS_BUILTINS.has(mod) ||
