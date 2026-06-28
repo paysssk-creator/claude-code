@@ -2,6 +2,7 @@ import { feature } from 'bun:bundle'
 import { getIsNonInteractiveSession } from 'src/bootstrap/state.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import { isEnvTruthy } from 'src/utils/envUtils.js'
+import { A_SHARE_DESKTOP_TRADER } from './built-in/aShareDesktopTrader.js'
 import { A_SHARE_TRADER } from './built-in/aShareTrader.js'
 import { CLAUDE_CODE_GUIDE_AGENT } from './built-in/claudeCodeGuideAgent.js'
 import { EXPLORE_AGENT } from './built-in/exploreAgent.js'
@@ -45,6 +46,7 @@ export function getBuiltInAgents(): AgentDefinition[] {
     GENERAL_PURPOSE_AGENT,
     STATUSLINE_SETUP_AGENT,
     A_SHARE_TRADER,
+    A_SHARE_DESKTOP_TRADER,
   ]
 
   if (areExplorePlanAgentsEnabled()) {

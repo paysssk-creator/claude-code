@@ -26,17 +26,17 @@ function generateOrderId(): string {
 }
 
 export class PaperBroker implements Broker {
-  private cash: number
-  private positions = new Map<string, Position>()
-  private orders = new Map<string, Order>()
-  private marketData: Map<string, MarketData>
-  private readonly buyDates = new Map<string, Date>()
-  private readonly enforceT1: boolean
-  private readonly feeModel: FeeModel
-  private totalFees = 0
-  private totalTurnover = 0
-  private readonly equityHistory: EquitySnapshot[] = []
-  private readonly previousClose = new Map<string, number>()
+  protected cash: number
+  protected positions = new Map<string, Position>()
+  protected orders = new Map<string, Order>()
+  protected marketData: Map<string, MarketData>
+  protected readonly buyDates = new Map<string, Date>()
+  protected readonly enforceT1: boolean
+  protected readonly feeModel: FeeModel
+  protected totalFees = 0
+  protected totalTurnover = 0
+  protected readonly equityHistory: EquitySnapshot[] = []
+  protected readonly previousClose = new Map<string, number>()
 
   constructor(options: PaperBrokerOptions) {
     this.cash = options.initialCash
@@ -230,7 +230,29 @@ export class PaperBroker implements Broker {
     return this.equityHistory
   }
 
-  private isSameTradingDay(a: Date, b: Date): boolean {
+  /**
+   * Replace the shadow ledger's cash and positions. Used by desktop brokers
+   * that reconcile with an external trading application.
+   */
+  syncPortfolio(
+    cash: number,
+    positions: Position[],
+    buyDates?: Map<string, Date>,
+  ): void {
+    this.cash = cash
+    this.positions.clear()
+    for (const pos of positions) {
+      this.positions.set(pos.symbol, { ...pos })
+    }
+    if (buyDates) {
+      this.buyDates.clear()
+      for (const [symbol, date] of buyDates) {
+        this.buyDates.set(symbol, date)
+      }
+    }
+  }
+
+  protected isSameTradingDay(a: Date, b: Date): boolean {
     return (
       a.getFullYear() === b.getFullYear() &&
       a.getMonth() === b.getMonth() &&

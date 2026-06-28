@@ -34,7 +34,14 @@
     "AI 驱动策略与回测运行器已添加（AgentStrategy / runAgentTradingSession）",
     "A 股交易技能已添加（/a-share-backtest / /a-share-trade / /a-share-loop）",
     "交易决策记忆已添加（recordDecision / loadRecentDecisions）",
-    "修复 runBacktest 改为 async 后 paper-trade 演示脚本未 await 的问题"
+    "修复 runBacktest 改为 async 后 paper-trade 演示脚本未 await 的问题",
+    "A 股桌面模拟交易已添加（同花顺 / 东方财富 app profiles）",
+    "Computer-use MCP 桌面交易导航器已添加",
+    "DesktopBroker 已实现 Broker 接口并支持影子账本对账",
+    "runDesktopTradingSession 桌面交易会话编排器已添加",
+    "a-share-desktop-trader 内置智能体已添加",
+    "/a-share-desktop-trade 技能已添加",
+    "桌面交易单元测试与技能注册测试已添加并通过"
   ],
   "warnings": [
     {
@@ -47,12 +54,12 @@
     }
   ],
   "failed": [],
-  "timestamp": "2026-06-28T08:00:00.000Z",
-  "paperTradeDemoStatus": "T+1 sell logic verified, fees/equity/risk/backtest integrated, price limits, CSV feed, stop-loss, drawdown circuit breaker, Sharpe/win rate/benchmark metrics integrated, CLI paper-trade command verified in production build, CSV OHLCV validation and JSON export added, PaperTradeTool/MarketDataSummaryTool added, a-share-trader agent added, AgentStrategy/runAgentTradingSession added, /a-share-backtest/trade/loop skills added, decision memory added",
+  "timestamp": "2026-06-28T10:00:00.000Z",
+  "paperTradeDemoStatus": "T+1 sell logic verified, fees/equity/risk/backtest integrated, price limits, CSV feed, stop-loss, drawdown circuit breaker, Sharpe/win rate/benchmark metrics integrated, CLI paper-trade command verified in production build, CSV OHLCV validation and JSON export added, PaperTradeTool/MarketDataSummaryTool added, a-share-trader agent added, AgentStrategy/runAgentTradingSession added, /a-share-backtest/trade/loop skills added, decision memory added, desktop paper trading via computer-use MCP added (ths/eastmoney profiles, DesktopBroker, runDesktopTradingSession, a-share-desktop-trader agent, /a-share-desktop-trade skill)",
   "knowledgeBaseStatus": "Reprise-Hosting archives (79 files), computer-use playbooks (6 files), trading-operations playbooks (5 files) available locally; browser screenshot-before-action rule enforced",
   "keyManagerStatus": "claude keys set/get/list/remove/configure implemented; keys stored in secureStorage (macOS keychain + plaintext fallback); auto-injected into process.env at startup; 5411 tests pass",
   "summary": {
-    "passed": 39,
+    "passed": 47,
     "warnings": 2,
     "failed": 0
   }

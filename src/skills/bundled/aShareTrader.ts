@@ -7,6 +7,20 @@ import {
 import { registerBundledSkill } from '../bundledSkills.js'
 
 const A_SHARE_TRADER_AGENT_TYPE = 'a-share-trader'
+const A_SHARE_DESKTOP_TRADER_AGENT_TYPE = 'a-share-desktop-trader'
+
+const CU_TOOLS = [
+  'mcp__computer-use__request_access',
+  'mcp__computer-use__screenshot',
+  'mcp__computer-use__bind_window',
+  'mcp__computer-use__open_application',
+  'mcp__computer-use__virtual_mouse',
+  'mcp__computer-use__virtual_keyboard',
+  'mcp__computer-use__computer_batch',
+  'mcp__computer-use__window_management',
+  'mcp__computer-use__read_clipboard',
+  'mcp__computer-use__write_clipboard',
+]
 
 function parseInterval(token: string): string | null {
   const match = token.match(/^(\d+)([smhd])$/)
@@ -83,6 +97,34 @@ Steps:
 5. Return the signals and the final portfolio value to the user.
 
 ${extra || ''}`
+}
+
+function buildDesktopTradePrompt(args: string): string {
+  const tokens = args.trim().split(/\s+/)
+  if (tokens.length === 0 || !tokens[0]) {
+    return `Usage: /a-share-desktop-trade <app> [symbols...]
+
+Operate a Chinese retail trading desktop application in paper/simulation mode.
+
+Supported apps: ths (同花顺), eastmoney (东方财富)
+Examples:
+  /a-share-desktop-trade ths 000001 600519
+  /a-share-desktop-trade eastmoney 000001`
+  }
+
+  const [app, ...symbols] = tokens
+  return `Run a desktop A-share paper-trading session via ${app}.
+
+Steps:
+1. Read docs/knowledge-base/computer-use/00-overview.md and 01-screenshot-observe.md.
+2. Read docs/knowledge-base/trading-operations/05-autonomous-trading.md.
+3. Use computer-use tools to request access, open ${app}, bind its window, and navigate to paper trading (模拟炒股 / 模拟交易).
+4. Read the paper portfolio and market data for: ${symbols.join(' ') || '(none specified)'}. If no symbols are given, use the app's current watchlist.
+5. Generate buy/sell/hold signals, execute paper orders, and screenshot confirmations.
+6. Write a decision log to docs/knowledge-base/trading-operations/decisions/YYYY-MM-DD-<symbols>.md.
+7. Unbind the window and report results.
+
+Safety: stop immediately if a real-money account flow (实盘交易, 真实账户, 资金账号) is detected.`
 }
 
 function buildLoopPrompt(args: string): string {
@@ -177,6 +219,27 @@ export function registerAShareTraderSkills(): void {
       const [csv, ...extraTokens] = trimmed.split(/\s+/)
       const extra = extraTokens.join(' ')
       return [{ type: 'text', text: buildTradePrompt(csv!, extra) }]
+    },
+  })
+
+  registerBundledSkill({
+    name: 'a-share-desktop-trade',
+    description:
+      'Operate a Chinese retail trading desktop app in paper/simulation mode and execute A-share paper trades',
+    argumentHint: '<app> [symbols...]',
+    userInvocable: true,
+    agent: A_SHARE_DESKTOP_TRADER_AGENT_TYPE,
+    allowedTools: [
+      AGENT_TOOL_NAME,
+      'Read',
+      'Write',
+      'Glob',
+      'Grep',
+      'TaskCreate',
+      ...CU_TOOLS,
+    ],
+    async getPromptForCommand(args) {
+      return [{ type: 'text', text: buildDesktopTradePrompt(args) }]
     },
   })
 
