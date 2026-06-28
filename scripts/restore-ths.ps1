@@ -3,8 +3,24 @@
 
 $proc = Get-Process -Name 'hexin' -ErrorAction SilentlyContinue | Select-Object -First 1
 if (-not $proc) {
-    Write-Error 'hexin.exe not found. Launch 同花顺 first.'
-    exit 1
+    $candidates = @(
+        'C:\同花顺软件\同花顺\hexin.exe',
+        'C:\Program Files (x86)\同花顺\hexin.exe',
+        'C:\Program Files\同花顺\hexin.exe'
+    )
+    $exe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+    if (-not $exe) {
+        Write-Error 'hexin.exe not found. Please launch 同花顺 manually.'
+        exit 1
+    }
+    Write-Output "Launching $exe ..."
+    Start-Process -FilePath $exe
+    Start-Sleep -Seconds 8
+    $proc = Get-Process -Name 'hexin' -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $proc) {
+        Write-Error 'hexin.exe did not start.'
+        exit 1
+    }
 }
 
 Add-Type -TypeDefinition @"
