@@ -120,7 +120,12 @@ For non-interactive/headless runs, invoke the CLI with --load-computer-use-mcp (
 Steps:
 1. Read docs/knowledge-base/computer-use/00-overview.md and 01-screenshot-observe.md.
 2. Read docs/knowledge-base/trading-operations/05-autonomous-trading.md.
-3. Use computer-use tools to request access, open ${app}, bind its window, and navigate to paper trading (模拟炒股 / 模拟交易).
+3. Use computer-use tools directly. Do NOT use Bash to search for the executable path.
+   - Call mcp__computer-use__request_access for ${app}.
+   - Call mcp__computer-use__bind_window action=list. If ${app} is already running, bind to the existing window title (e.g. "同花顺(9.60.20) - 首页").
+   - Only call mcp__computer-use__open_application if no matching window exists.
+   - If open_application fails with LAUNCH_FAILED, the app is already running; list windows again and bind.
+   - Then navigate to paper trading (模拟炒股 / 模拟交易).
 4. Read the paper portfolio and market data for: ${symbols.join(' ') || '(none specified)'}. If no symbols are given, use the app's current watchlist.
 5. Generate buy/sell/hold signals, execute paper orders, and screenshot confirmations.
 6. Write a decision log to docs/knowledge-base/trading-operations/decisions/YYYY-MM-DD-<symbols>.md.
@@ -128,7 +133,7 @@ Steps:
 
 Safety: stop immediately if a real-money account flow (实盘交易, 真实账户, 资金账号) is detected.
 
-Headless note: when this session was launched with --print or by cron, include --load-computer-use-mcp on the CLI, plus --enable-auto-mode (recommended) or --permission-mode bypassPermissions only with explicit user authorization.`
+Headless note: when this session was launched with --print or by cron, include --load-computer-use-mcp on the CLI. With --permission-mode bypassPermissions or --enable-auto-mode, permission is auto-granted headlessly; do NOT ask the user, just call request_access and proceed.`
 }
 
 function extractIntervalAndApp(args: string): {

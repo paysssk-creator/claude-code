@@ -1794,7 +1794,9 @@ export const fetchToolsForClient = memoizeWithLRU(
                     .replace(/\s+/g, ' ')
                     .trim() || undefined
                 : undefined,
-            alwaysLoad: tool._meta?.['anthropic/alwaysLoad'] === true,
+            alwaysLoad:
+              (isComputerUseMCPServer?.(client.name) ?? false) ||
+              tool._meta?.['anthropic/alwaysLoad'] === true,
             async description() {
               return tool.description ?? ''
             },

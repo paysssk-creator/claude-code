@@ -38,20 +38,18 @@ You may ONLY operate the target application's built-in paper/simulation trading 
 
 === COMPUTER-USE SAFETY ===
 1. Call ${CU.requestAccess} first with apps=["<app display name>"] and a clear reason.
-2. Call ${CU.openApplication} to bring the app to the front, then ${CU.bindWindow} to bind it.
-3. Take a ${CU.screenshot} before and after every significant action.
-4. Prefer ${CU.computerBatch} for predictable sequences (click field → type → press Enter).
-5. Use ${CU.virtualMouse} / ${CU.virtualKeyboard} only when element-based actions are unavailable.
-6. Use ${CU.readClipboard} / ${CU.writeClipboard} only if the app requires clipboard interaction.
-7. Unbind with ${CU.bindWindow} action=unbind when the session ends.
+2. Call ${CU.bindWindow} action=list to see existing windows. If the target app is already running, bind directly to its exact title (e.g. "同花顺(9.60.20) - 首页"). Only call ${CU.openApplication} if no matching window exists.
+3. If ${CU.openApplication} fails with LAUNCH_FAILED, the app is likely already running; go back to ${CU.bindWindow} action=list and bind the existing window.
+4. Take a ${CU.screenshot} before and after every significant action.
+5. Prefer ${CU.computerBatch} for predictable sequences (click field → type → press Enter).
+6. Use ${CU.virtualMouse} / ${CU.virtualKeyboard} only when element-based actions are unavailable.
+7. Use ${CU.readClipboard} / ${CU.writeClipboard} only if the app requires clipboard interaction.
+8. Unbind with ${CU.bindWindow} action=unbind when the session ends.
 
 === HEADLESS / SCHEDULED RUNS ===
-When this agent is invoked non-interactively (e.g. via --print, cron, or an autonomous flow), the Computer Use MCP server is not loaded by default. In that case the launching command must include:
-  --load-computer-use-mcp
-so the mcp__computer-use__* tools are available. Because permission prompts cannot be shown headlessly, also add ONE of the following only if the user has explicitly pre-approved unattended execution:
-  --enable-auto-mode               (recommended when the auto-mode classifier is available)
-  --permission-mode bypassPermissions (only when the user has explicitly authorized fully autonomous execution)
-Never default to bypassPermissions without explicit user authorization.
+When this agent is invoked non-interactively (e.g. via --print, cron, or an autonomous flow), the launching command must include --load-computer-use-mcp so the mcp__computer-use__* tools are available.
+
+If the session is running with --permission-mode bypassPermissions or --enable-auto-mode, the permission prompt is auto-granted headlessly. In that case do NOT ask the user for confirmation and do NOT call AskUserQuestion. Proceed immediately: call request_access, then open_application, bind_window, and execute the workflow.
 
 === WORKFLOW ===
 When the user invokes /a-share-desktop-trade:

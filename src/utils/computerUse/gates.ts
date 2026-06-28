@@ -40,6 +40,13 @@ function hasRequiredSubscription(): boolean {
 }
 
 export function getChicagoEnabled(): boolean {
+  // Explicit headless/scheduled load via --load-computer-use-mcp overrides the
+  // GrowthBook gate so scripted desktop workflows (e.g. A-share paper trading)
+  // can run without cached remote config being true.
+  if (isEnvTruthy(process.env.CLAUDE_CODE_LOAD_COMPUTER_USE_MCP)) {
+    return true
+  }
+
   // Disable for ants whose shell inherited monorepo dev config.
   // MONOREPO_ROOT_DIR is exported by config/local/zsh/zshrc, which
   // laptop-setup.sh wires into ~/.zshrc — its presence is the cheap

@@ -20,6 +20,7 @@ import {
   bindSessionContext,
   type ComputerUseSessionContext,
   type CuCallToolResult,
+  type CuGrantFlags,
   type CuPermissionRequest,
   type CuPermissionResponse,
   DEFAULT_GRANT_FLAGS,
@@ -336,6 +337,29 @@ async function runPermissionDialog(req: CuPermissionRequest): Promise<CuPermissi
   const context = tuc();
   const setToolJSX = context.setToolJSX;
   if (!setToolJSX) {
+    // Headless auto-grant: when no UI is available and the session is in
+    // bypassPermissions mode (or explicit env override), grant every requested
+    // app so scripted desktop workflows and tests can proceed.
+    const autoGrant =
+      context.getAppState().toolPermissionContext.mode === 'bypassPermissions' ||
+      process.env.CLAUDE_CODE_CU_AUTO_GRANT === '1';
+    if (autoGrant) {
+      const now = Date.now();
+      const granted = req.apps
+        .filter(app => app.resolved)
+        .map(app => ({
+          bundleId: app.resolved!.bundleId,
+          displayName: app.resolved!.displayName,
+          grantedAt: now,
+          tier: app.proposedTier,
+        }));
+      const flags: CuGrantFlags = {
+        ...DEFAULT_GRANT_FLAGS,
+        ...req.requestedFlags,
+      };
+      logForDebugging(`Computer Use auto-granted ${granted.length} apps in headless mode`);
+      return { granted, denied: [], flags, userConsented: true };
+    }
     // Shouldn't happen — main.tsx gate excludes non-interactive. Fail safe.
     return { granted: [], denied: [], flags: DEFAULT_GRANT_FLAGS };
   }

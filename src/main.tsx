@@ -263,9 +263,11 @@ import {
   getMcpServerSignature,
   parseMcpConfig,
   parseMcpConfigFromFilePath,
+  setMcpServerEnabled,
 } from 'src/services/mcp/config.js';
 import { excludeCommandsByServer, excludeResourcesByServer } from 'src/services/mcp/utils.js';
 import { isXaaEnabled } from 'src/services/mcp/xaaIdpLogin.js';
+import { COMPUTER_USE_MCP_SERVER_NAME } from 'src/utils/computerUse/common.js';
 import { getRelevantTips } from 'src/services/tips/tipRegistry.js';
 import { logContextMetrics } from 'src/utils/api.js';
 import { CLAUDE_IN_CHROME_MCP_SERVER_NAME, isClaudeInChromeMCPServer } from 'src/utils/claudeInChrome/common.js';
@@ -1397,11 +1399,9 @@ async function run(): Promise<CommanderCommand> {
       'Only use MCP servers from --mcp-config, ignoring all other MCP configurations',
       () => true,
     )
-    .addOption(
-      new Option(
-        '--load-computer-use-mcp',
-        'Load the Computer Use MCP server even in non-interactive/print mode (required for headless desktop trading)',
-      ).hideHelp(),
+    .option(
+      '--load-computer-use-mcp',
+      'Load the Computer Use MCP server even in non-interactive/print mode (required for headless desktop trading)',
     )
     .option('--session-id <uuid>', 'Use a specific session ID for the conversation (must be a valid UUID)')
     .option('-n, --name <name>', 'Set a display name for this session (shown in /resume and terminal title)')
@@ -2074,16 +2074,27 @@ async function run(): Promise<CommanderCommand> {
       // `type: 'stdio'`. An enterprise-config ant with the GB gate on would
       // otherwise process.exit(1). Chrome has the same latent issue but has
       // shipped without incident; chicago places itself correctly.
+      const loadComputerUseMcp = (options as { loadComputerUseMcp?: boolean }).loadComputerUseMcp;
       if (
         feature('CHICAGO_MCP') &&
         getPlatform() !== 'unknown' &&
-        (!getIsNonInteractiveSession() || (options as { loadComputerUseMcp?: boolean }).loadComputerUseMcp)
+        (!getIsNonInteractiveSession() || loadComputerUseMcp)
       ) {
         try {
+          // --load-computer-use-mcp signals explicit user intent for headless/
+          // scheduled desktop automation; override the cached GrowthBook gate.
+          if (loadComputerUseMcp) {
+            process.env.CLAUDE_CODE_LOAD_COMPUTER_USE_MCP = '1';
+          }
           const { getChicagoEnabled } = await import('src/utils/computerUse/gates.js');
           if (getChicagoEnabled()) {
             const { setupComputerUseMCP } = await import('src/utils/computerUse/setup.js');
             const { mcpConfig, allowedTools: cuTools } = setupComputerUseMCP();
+            // In headless/print mode the computer-use server defaults to disabled;
+            // explicitly opt it in when the user passed --load-computer-use-mcp.
+            if ((options as { loadComputerUseMcp?: boolean }).loadComputerUseMcp) {
+              setMcpServerEnabled(COMPUTER_USE_MCP_SERVER_NAME, true);
+            }
             dynamicMcpConfig = {
               ...dynamicMcpConfig,
               ...mcpConfig,
