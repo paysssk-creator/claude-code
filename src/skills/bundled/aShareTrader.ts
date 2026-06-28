@@ -131,7 +131,7 @@ Rules:
 
 Sequence:
 1. mcp__computer-use__request_access apps=["同花顺"] reason="A-share desktop paper-trading automation"
-2. mcp__computer-use__bind_window action=list. Pick the main THS terminal window (largest window; title contains 同花顺 and preferably 首页). Avoid 问财AI助手, login dialogs, and update popups. Bind it.
+2. mcp__computer-use__bind_window action=list. Pick the main THS terminal window (largest window; title contains 同花顺 and preferably 首页). Avoid 问财AI助手, login dialogs, and update popups. Bind it. If no main THS window exists, call mcp__computer-use__open_application app="同花顺", wait 5 seconds, list windows again, and bind.
 3. mcp__computer-use__screenshot. If the text does NOT contain "模拟炒股" or "模拟交易":
    a. Try mcp__computer-use__click_element name="交易".
    b. Try mcp__computer-use__click_element name="模拟炒股".
