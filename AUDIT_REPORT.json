@@ -41,7 +41,11 @@
     "runDesktopTradingSession 桌面交易会话编排器已添加",
     "a-share-desktop-trader 内置智能体已添加",
     "/a-share-desktop-trade 技能已添加",
-    "桌面交易单元测试与技能注册测试已添加并通过"
+    "桌面交易单元测试与技能注册测试已添加并通过",
+    "Computer Use MCP 支持 --load-computer-use-mcp 在非交互/print 模式加载",
+    "a-share-desktop-trader 智能体提示词补充 headless/cron 运行说明",
+    "/a-share-desktop-loop 周期性桌面纸面交易技能已添加",
+    "桌面交易文档已补充 headless/cron 用法与安全规则"
   ],
   "warnings": [
     {

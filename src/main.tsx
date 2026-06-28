@@ -1397,6 +1397,12 @@ async function run(): Promise<CommanderCommand> {
       'Only use MCP servers from --mcp-config, ignoring all other MCP configurations',
       () => true,
     )
+    .addOption(
+      new Option(
+        '--load-computer-use-mcp',
+        'Load the Computer Use MCP server even in non-interactive/print mode (required for headless desktop trading)',
+      ).hideHelp(),
+    )
     .option('--session-id <uuid>', 'Use a specific session ID for the conversation (must be a valid UUID)')
     .option('-n, --name <name>', 'Set a display name for this session (shown in /resume and terminal title)')
     .option(
@@ -2068,7 +2074,11 @@ async function run(): Promise<CommanderCommand> {
       // `type: 'stdio'`. An enterprise-config ant with the GB gate on would
       // otherwise process.exit(1). Chrome has the same latent issue but has
       // shipped without incident; chicago places itself correctly.
-      if (feature('CHICAGO_MCP') && getPlatform() !== 'unknown' && !getIsNonInteractiveSession()) {
+      if (
+        feature('CHICAGO_MCP') &&
+        getPlatform() !== 'unknown' &&
+        (!getIsNonInteractiveSession() || (options as { loadComputerUseMcp?: boolean }).loadComputerUseMcp)
+      ) {
         try {
           const { getChicagoEnabled } = await import('src/utils/computerUse/gates.js');
           if (getChicagoEnabled()) {

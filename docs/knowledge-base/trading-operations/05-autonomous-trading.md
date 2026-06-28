@@ -21,6 +21,8 @@ All operations remain in simulation / paper mode. No real-money trades are execu
 | `/a-share-backtest <csv>` | Run and analyze a backtest on the given CSV. |
 | `/a-share-trade <csv>` | Produce AI-driven signals for the latest day and write a decision log. |
 | `/a-share-loop [interval] <csv>` | Schedule recurring `/a-share-trade` analysis. Defaults to `1d`. |
+| `/a-share-desktop-trade <app> [symbols...]` | Operate a Chinese retail trading desktop app in paper mode. |
+| `/a-share-desktop-loop [interval] <app> [symbols...]` | Schedule recurring `/a-share-desktop-trade` sessions. Defaults to `1d`. |
 
 ## A-share rules enforced
 
@@ -69,6 +71,23 @@ Example:
 3. **Bind window**: Use `mcp__computer-use__bind_window` and `unbind` when done.
 4. **Screenshot before/after**: Verify every screen state with `mcp__computer-use__screenshot`.
 5. **No real orders**: The local broker is a shadow ledger; actual order entry happens only inside the app’s paper-trading UI.
+
+### Headless / cron usage
+
+When the desktop agent is launched non-interactively (e.g. `claude --print --agent a-share-desktop-trader ...` or by an external scheduler), the Computer Use MCP server is normally skipped. Add the following CLI flags:
+
+```text
+--load-computer-use-mcp
+```
+
+Because permission prompts cannot be shown headlessly, also add **one** of the following only if the user has explicitly pre-approved unattended execution:
+
+```text
+--enable-auto-mode                # recommended when the auto-mode classifier is available
+--permission-mode bypassPermissions # only with explicit autonomous authorization
+```
+
+`/a-share-desktop-loop` fires inside the running Claude Code session, so it does not need these flags as long as the session stays open.
 
 ### Architecture
 

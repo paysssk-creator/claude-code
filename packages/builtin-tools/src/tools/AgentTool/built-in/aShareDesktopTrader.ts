@@ -45,6 +45,14 @@ You may ONLY operate the target application's built-in paper/simulation trading 
 6. Use ${CU.readClipboard} / ${CU.writeClipboard} only if the app requires clipboard interaction.
 7. Unbind with ${CU.bindWindow} action=unbind when the session ends.
 
+=== HEADLESS / SCHEDULED RUNS ===
+When this agent is invoked non-interactively (e.g. via --print, cron, or an autonomous flow), the Computer Use MCP server is not loaded by default. In that case the launching command must include:
+  --load-computer-use-mcp
+so the mcp__computer-use__* tools are available. Because permission prompts cannot be shown headlessly, also add ONE of the following only if the user has explicitly pre-approved unattended execution:
+  --enable-auto-mode               (recommended when the auto-mode classifier is available)
+  --permission-mode bypassPermissions (only when the user has explicitly authorized fully autonomous execution)
+Never default to bypassPermissions without explicit user authorization.
+
 === WORKFLOW ===
 When the user invokes /a-share-desktop-trade:
 1. Read docs/knowledge-base/computer-use/00-overview.md and 01-screenshot-observe.md using ${FILE_READ_TOOL_NAME}.

@@ -109,7 +109,9 @@ Operate a Chinese retail trading desktop application in paper/simulation mode.
 Supported apps: ths (同花顺), eastmoney (东方财富)
 Examples:
   /a-share-desktop-trade ths 000001 600519
-  /a-share-desktop-trade eastmoney 000001`
+  /a-share-desktop-trade eastmoney 000001
+
+For non-interactive/headless runs, invoke the CLI with --load-computer-use-mcp (and --enable-auto-mode or --permission-mode bypassPermissions only if the user has pre-approved unattended execution).`
   }
 
   const [app, ...symbols] = tokens
@@ -124,7 +126,59 @@ Steps:
 6. Write a decision log to docs/knowledge-base/trading-operations/decisions/YYYY-MM-DD-<symbols>.md.
 7. Unbind the window and report results.
 
-Safety: stop immediately if a real-money account flow (实盘交易, 真实账户, 资金账号) is detected.`
+Safety: stop immediately if a real-money account flow (实盘交易, 真实账户, 资金账号) is detected.
+
+Headless note: when this session was launched with --print or by cron, include --load-computer-use-mcp on the CLI, plus --enable-auto-mode (recommended) or --permission-mode bypassPermissions only with explicit user authorization.`
+}
+
+function extractIntervalAndApp(args: string): {
+  interval: string
+  app: string
+  symbols: string[]
+} {
+  const tokens = args.trim().split(/\s+/)
+  let interval = '1d'
+  let appIndex = 0
+
+  if (tokens[0] && parseInterval(tokens[0]!) !== null) {
+    interval = tokens[0]!
+    appIndex = 1
+  }
+
+  const app = tokens[appIndex] ?? ''
+  const symbols = tokens.slice(appIndex + 1)
+  return { interval, app, symbols }
+}
+
+function buildDesktopLoopPrompt(args: string): string {
+  const { interval, app, symbols } = extractIntervalAndApp(args)
+  if (!app) {
+    return `Usage: /a-share-desktop-loop [interval] <app> [symbols...]
+
+Schedule recurring A-share desktop paper-trading sessions.
+
+Examples:
+  /a-share-desktop-loop 1d ths 000001 600519
+  /a-share-desktop-loop 4h eastmoney 000001
+  /a-share-desktop-loop ths 000001        (defaults to 1d)`
+  }
+
+  const cron = parseInterval(interval)
+  if (!cron) {
+    return `Invalid interval "${interval}". Use Ns, Nm, Nh, or Nd (e.g. 1d, 4h, 30m).`
+  }
+
+  const symbolPart = symbols.length > 0 ? ` ${symbols.join(' ')}` : ''
+  const invocation = `/a-share-desktop-trade ${app}${symbolPart}`
+
+  return `Schedule recurring A-share desktop paper-trading sessions.
+
+1. Call ${CRON_CREATE_TOOL_NAME} with:
+   - cron: "${cron}"
+   - prompt: "${invocation}"
+   - recurring: true
+2. Confirm the schedule, cron expression, and auto-expiry after ${DEFAULT_MAX_AGE_DAYS} days.
+3. Then immediately run "${invocation}" once so the user sees the first result now.`
 }
 
 function buildLoopPrompt(args: string): string {
@@ -240,6 +294,29 @@ export function registerAShareTraderSkills(): void {
     ],
     async getPromptForCommand(args) {
       return [{ type: 'text', text: buildDesktopTradePrompt(args) }]
+    },
+  })
+
+  registerBundledSkill({
+    name: 'a-share-desktop-loop',
+    description:
+      'Schedule recurring A-share desktop paper-trading sessions via a Chinese retail trading app',
+    argumentHint: '[interval] <app> [symbols...]',
+    userInvocable: true,
+    isEnabled: isKairosCronEnabled,
+    agent: A_SHARE_DESKTOP_TRADER_AGENT_TYPE,
+    allowedTools: [
+      CRON_CREATE_TOOL_NAME,
+      'Skill',
+      AGENT_TOOL_NAME,
+      'Read',
+      'Write',
+      'Glob',
+      'Grep',
+      'TaskCreate',
+    ],
+    async getPromptForCommand(args) {
+      return [{ type: 'text', text: buildDesktopLoopPrompt(args) }]
     },
   })
 
