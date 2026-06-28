@@ -40,6 +40,12 @@ export async function runDesktopTradingSession(
 ): Promise<DesktopTradingSessionResult> {
   const navigator = options.navigator
 
+  await navigator.requestAccess(
+    'A-share desktop paper-trading automation via computer-use MCP',
+  )
+  await navigator.openAndBind()
+  await navigator.navigateToPaperTrading()
+
   const broker = new DesktopBroker({
     navigator,
     initialCash: options.initialCash,
@@ -102,6 +108,8 @@ export async function runDesktopTradingSession(
       'Review screenshots and app confirmations for execution quality.',
   }
   const decisionPath = recordDecision(record)
+
+  await navigator.unbind()
 
   return {
     signals,
