@@ -6,6 +6,7 @@
  * symbol,date,open,high,low,close,volume data.
  */
 
+import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import {
   AShareFeeModel,
@@ -32,6 +33,10 @@ export async function paperTradeHandler(
   options: PaperTradeOptions,
 ): Promise<void> {
   const csvPath = resolve(options.csv ?? 'scripts/data/sample-ohlcv.csv')
+  if (!existsSync(csvPath)) {
+    throw new Error(`CSV file not found: ${csvPath}`)
+  }
+
   const initialCash = Number(options.cash ?? 100_000)
   const dipThreshold = Number(options.dip ?? 0.03)
   const profitThreshold = Number(options.profit ?? 0.05)

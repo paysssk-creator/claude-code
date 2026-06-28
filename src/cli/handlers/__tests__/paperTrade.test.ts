@@ -39,4 +39,12 @@ describe('paperTradeHandler', () => {
       }),
     ).rejects.toThrow('Invalid initial cash')
   })
+
+  test('rejects missing CSV file with a clear error', async () => {
+    await expect(
+      paperTradeHandler({
+        csv: 'scripts/data/does-not-exist.csv',
+      }),
+    ).rejects.toThrow('CSV file not found')
+  })
 })
