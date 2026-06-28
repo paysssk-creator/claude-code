@@ -7,6 +7,7 @@
     "01-backtest-playbook.md",
     "02-strategy-tuning.md",
     "03-data-preparation.md",
-    "04-extend-strategy.md"
+    "04-extend-strategy.md",
+    "05-autonomous-trading.md"
   ]
 }

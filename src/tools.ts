@@ -89,6 +89,8 @@ import { ExitWorktreeTool } from '@claude-code-best/builtin-tools/tools/ExitWork
 import { ConfigTool } from '@claude-code-best/builtin-tools/tools/ConfigTool/ConfigTool.js'
 import { LocalMemoryRecallTool } from '@claude-code-best/builtin-tools/tools/LocalMemoryRecallTool/LocalMemoryRecallTool.js'
 import { VaultHttpFetchTool } from '@claude-code-best/builtin-tools/tools/VaultHttpFetchTool/VaultHttpFetchTool.js'
+import { MarketDataSummaryTool } from '@claude-code-best/builtin-tools/tools/MarketDataSummaryTool/MarketDataSummaryTool.js'
+import { PaperTradeTool } from '@claude-code-best/builtin-tools/tools/PaperTradeTool/PaperTradeTool.js'
 import { TaskCreateTool } from '@claude-code-best/builtin-tools/tools/TaskCreateTool/TaskCreateTool.js'
 import { TaskGetTool } from '@claude-code-best/builtin-tools/tools/TaskGetTool/TaskGetTool.js'
 import { TaskUpdateTool } from '@claude-code-best/builtin-tools/tools/TaskUpdateTool/TaskUpdateTool.js'
@@ -237,6 +239,8 @@ export function getAllBaseTools(): Tools {
     EnterPlanModeTool,
     LocalMemoryRecallTool,
     VaultHttpFetchTool,
+    MarketDataSummaryTool,
+    PaperTradeTool,
     ...(process.env.USER_TYPE === 'ant' ? [ConfigTool] : []),
     ...(process.env.USER_TYPE === 'ant' ? [TungstenTool] : []),
     ...(SuggestBackgroundPRTool ? [SuggestBackgroundPRTool] : []),

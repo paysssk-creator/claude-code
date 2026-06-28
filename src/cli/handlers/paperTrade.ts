@@ -95,7 +95,7 @@ export async function paperTradeHandler(
     maxDrawdownPct,
   })
 
-  const result = runBacktest({
+  const result = await runBacktest({
     broker,
     strategy,
     symbols: feed.symbols,

@@ -52,7 +52,7 @@ const riskManager = new BasicRiskManager({
   maxOrdersPerDay: 2,
 })
 
-const result = runBacktest({
+const result = await runBacktest({
   broker,
   strategy,
   symbols: feed.symbols,

@@ -11,7 +11,7 @@ import {
 import { makeAshareMarketData } from '../brokers/ashareMockData.js'
 
 describe('runBacktest', () => {
-  test('runs a deterministic multi-day session', () => {
+  test('runs a deterministic multi-day session', async () => {
     const symbol = '000001'
     const dates = [
       new Date('2026-06-28'),
@@ -35,7 +35,7 @@ describe('runBacktest', () => {
       lotSize: 100,
     })
 
-    const result = runBacktest({
+    const result = await runBacktest({
       broker,
       strategy,
       symbols: [symbol],
@@ -62,7 +62,7 @@ describe('runBacktest', () => {
     expect(result.benchmarkReturnPct).not.toBeNaN()
   })
 
-  test('reports closed trade P&L', () => {
+  test('reports closed trade P&L', async () => {
     const symbol = '000001'
     const dates = [
       new Date('2026-06-28'),
@@ -86,7 +86,7 @@ describe('runBacktest', () => {
       lotSize: 100,
     })
 
-    const result = runBacktest({
+    const result = await runBacktest({
       broker,
       strategy,
       symbols: [symbol],
@@ -108,7 +108,7 @@ describe('runBacktest', () => {
     expect(sellTrades[0]?.pnl).not.toBeNaN()
   })
 
-  test('exports backtest result to JSON', () => {
+  test('exports backtest result to JSON', async () => {
     const symbol = '000001'
     const dates = [
       new Date('2026-06-28'),
@@ -132,7 +132,7 @@ describe('runBacktest', () => {
       lotSize: 100,
     })
 
-    const result = runBacktest({
+    const result = await runBacktest({
       broker,
       strategy,
       symbols: [symbol],

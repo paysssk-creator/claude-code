@@ -57,6 +57,10 @@ export interface StrategySignal {
 
 export interface Strategy {
   evaluate(data: MarketData, portfolio: Portfolio): StrategySignal | null
+  evaluateAsync?(
+    data: MarketData,
+    portfolio: Portfolio,
+  ): Promise<StrategySignal | null>
 }
 
 export interface EquitySnapshot {

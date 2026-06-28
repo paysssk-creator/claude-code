@@ -10,6 +10,7 @@ import { registerSimplifySkill } from './simplify.js'
 import { registerSkillifySkill } from './skillify.js'
 import { registerStuckSkill } from './stuck.js'
 import { registerCronDeleteSkill, registerCronListSkill } from './cronManage.js'
+import { registerAShareTraderSkills } from './aShareTrader.js'
 import { registerLoopSkill } from './loop.js'
 import { registerDreamSkill } from './dream.js'
 import { registerUpdateConfigSkill } from './updateConfig.js'
@@ -36,6 +37,7 @@ export function initBundledSkills(): void {
   registerBatchSkill()
   registerStuckSkill()
   registerLoopSkill()
+  registerAShareTraderSkills()
   registerCronListSkill()
   registerCronDeleteSkill()
   registerDreamSkill()

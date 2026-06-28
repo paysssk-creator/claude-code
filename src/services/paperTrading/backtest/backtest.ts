@@ -1,5 +1,11 @@
 import { writeFileSync } from 'node:fs'
-import type { Broker, MarketData, Strategy, StrategySignal } from '../types.js'
+import type {
+  Broker,
+  MarketData,
+  Portfolio,
+  Strategy,
+  StrategySignal,
+} from '../types.js'
 import type { RiskManager } from '../risk/riskManager.js'
 
 export interface TradeRecord {
@@ -35,91 +41,39 @@ export interface BacktestOptions {
   onDayEnd?: (broker: Broker, date: Date) => void
 }
 
-/**
- * Run a simple day-by-day backtest.
- *
- * For each date, market data is updated, the strategy is evaluated per symbol,
- * and orders are placed through the broker. The broker must implement
- * record-keeping such as `recordEquity` if an equity curve is desired.
- */
-export function runBacktest(options: BacktestOptions): BacktestResult {
-  const {
-    broker,
-    strategy,
-    symbols,
-    dates,
-    updateMarketData,
-    riskManager,
-    onDayEnd,
-  } = options
-  const equityCurve: { timestamp: Date; totalValue: number }[] = []
-  const signals: StrategySignal[] = []
-  const trades: TradeRecord[] = []
-  const buyPrices = new Map<string, number>()
+interface BacktestState {
+  equityCurve: { timestamp: Date; totalValue: number }[]
+  signals: StrategySignal[]
+  trades: TradeRecord[]
+  peak: number
+  initialPrices: Map<string, number>
+  finalPrices: Map<string, number>
+  buyPrices: Map<string, number>
+}
 
-  let peak = broker.getPortfolio().totalValue
-  const initialPrices = new Map<string, number>()
-  const finalPrices = new Map<string, number>()
-
-  for (const date of dates) {
-    for (const symbol of symbols) {
-      const data = updateMarketData(date, symbol)
-      if (!initialPrices.has(symbol)) {
-        initialPrices.set(symbol, data.close)
-      }
-      finalPrices.set(symbol, data.close)
-      const signal = strategy.evaluate(data, broker.getPortfolio())
-      if (!signal) continue
-
-      const approved =
-        riskManager?.approve(signal, data, broker.getPortfolio()) ?? signal
-      if (!approved) continue
-
-      const order = broker.placeOrder({
-        symbol: approved.symbol,
-        side: approved.side,
-        type: 'market',
-        quantity: approved.quantity,
-      })
-      signals.push(approved)
-
-      if (order.status === 'filled') {
-        const price = order.price ?? data.close
-        if (order.side === 'buy') {
-          buyPrices.set(order.symbol, price)
-        } else {
-          const entryPrice = buyPrices.get(order.symbol) ?? price
-          const pnl = (price - entryPrice) * order.quantity
-          trades.push({
-            timestamp: order.timestamp,
-            symbol: order.symbol,
-            side: order.side,
-            quantity: order.quantity,
-            price,
-            pnl,
-          })
-        }
-      }
-    }
-
-    onDayEnd?.(broker, date)
-
-    const totalValue = broker.getPortfolio().totalValue
-    if (totalValue > peak) peak = totalValue
-    equityCurve.push({ timestamp: date, totalValue })
+function createBacktestState(initialValue: number): BacktestState {
+  return {
+    equityCurve: [],
+    signals: [],
+    trades: [],
+    peak: initialValue,
+    initialPrices: new Map<string, number>(),
+    finalPrices: new Map<string, number>(),
+    buyPrices: new Map<string, number>(),
   }
+}
 
-  const initialValue =
-    equityCurve[0]?.totalValue ?? broker.getPortfolio().totalValue
+function computeMetrics(
+  equityCurve: BacktestState['equityCurve'],
+  trades: BacktestState['trades'],
+  symbols: string[],
+  initialPrices: Map<string, number>,
+  finalPrices: Map<string, number>,
+): Omit<BacktestResult, 'equityCurve' | 'signals' | 'trades'> {
+  const initialValue = equityCurve[0]?.totalValue ?? 0
   const finalValue = equityCurve.at(-1)?.totalValue ?? initialValue
   const totalReturnPct =
     initialValue === 0 ? 0 : (finalValue - initialValue) / initialValue
-
-  const maxDrawdownPct = equityCurve.reduce((max, point) => {
-    if (point.totalValue > peak) peak = point.totalValue
-    const drawdown = peak === 0 ? 0 : (peak - point.totalValue) / peak
-    return Math.max(max, drawdown)
-  }, 0)
 
   const returns = equityCurve.slice(1).map((point, i) => {
     const prev = equityCurve[i]?.totalValue ?? initialValue
@@ -153,16 +107,143 @@ export function runBacktest(options: BacktestOptions): BacktestResult {
         }, 0) / validSymbols.length
 
   return {
-    equityCurve,
-    signals,
-    trades,
     totalReturnPct,
-    maxDrawdownPct,
+    maxDrawdownPct: 0,
     sharpeRatio,
     winRatePct,
     totalTrades: closedTrades.length,
     benchmarkReturnPct,
   }
+}
+
+function finalizeBacktestResult(
+  state: BacktestState,
+  symbols: string[],
+): BacktestResult {
+  const metrics = computeMetrics(
+    state.equityCurve,
+    state.trades,
+    symbols,
+    state.initialPrices,
+    state.finalPrices,
+  )
+
+  let peak = state.peak
+  const maxDrawdownPct = state.equityCurve.reduce((max, point) => {
+    if (point.totalValue > peak) peak = point.totalValue
+    const drawdown = peak === 0 ? 0 : (peak - point.totalValue) / peak
+    return Math.max(max, drawdown)
+  }, 0)
+
+  return {
+    ...metrics,
+    maxDrawdownPct,
+    equityCurve: state.equityCurve,
+    signals: state.signals,
+    trades: state.trades,
+  }
+}
+
+async function runBacktestLoop(
+  options: BacktestOptions,
+  getSignal: (
+    strategy: Strategy,
+    data: MarketData,
+    portfolio: Portfolio,
+  ) => StrategySignal | null | Promise<StrategySignal | null>,
+): Promise<BacktestResult> {
+  const {
+    broker,
+    strategy,
+    symbols,
+    dates,
+    updateMarketData,
+    riskManager,
+    onDayEnd,
+  } = options
+  const state = createBacktestState(broker.getPortfolio().totalValue)
+
+  for (const date of dates) {
+    for (const symbol of symbols) {
+      const data = updateMarketData(date, symbol)
+      if (!state.initialPrices.has(symbol)) {
+        state.initialPrices.set(symbol, data.close)
+      }
+      state.finalPrices.set(symbol, data.close)
+      const signal = await getSignal(strategy, data, broker.getPortfolio())
+      if (!signal) continue
+
+      const approved =
+        riskManager?.approve(signal, data, broker.getPortfolio()) ?? signal
+      if (!approved) continue
+
+      const order = broker.placeOrder({
+        symbol: approved.symbol,
+        side: approved.side,
+        type: 'market',
+        quantity: approved.quantity,
+      })
+      state.signals.push(approved)
+
+      if (order.status === 'filled') {
+        const price = order.price ?? data.close
+        if (order.side === 'buy') {
+          state.buyPrices.set(order.symbol, price)
+        } else {
+          const entryPrice = state.buyPrices.get(order.symbol) ?? price
+          const pnl = (price - entryPrice) * order.quantity
+          state.trades.push({
+            timestamp: order.timestamp,
+            symbol: order.symbol,
+            side: order.side,
+            quantity: order.quantity,
+            price,
+            pnl,
+          })
+        }
+      }
+    }
+
+    onDayEnd?.(broker, date)
+
+    const totalValue = broker.getPortfolio().totalValue
+    if (totalValue > state.peak) state.peak = totalValue
+    state.equityCurve.push({ timestamp: date, totalValue })
+  }
+
+  return finalizeBacktestResult(state, symbols)
+}
+
+/**
+ * Run a simple day-by-day backtest.
+ *
+ * For each date, market data is updated, the strategy is evaluated per symbol,
+ * and orders are placed through the broker. The broker must implement
+ * record-keeping such as `recordEquity` if an equity curve is desired.
+ */
+export async function runBacktest(
+  options: BacktestOptions,
+): Promise<BacktestResult> {
+  return await runBacktestLoop(options, (strategy, data, portfolio) =>
+    strategy.evaluate(data, portfolio),
+  )
+}
+
+/**
+ * Run a day-by-day backtest supporting asynchronous strategy evaluation.
+ *
+ * Identical to {@link runBacktest}, but awaits `strategy.evaluateAsync` if
+ * present, otherwise falls back to synchronous `evaluate`.
+ */
+export async function runBacktestAsync(
+  options: BacktestOptions,
+): Promise<BacktestResult> {
+  return await runBacktestLoop(options, (strategy, data, portfolio) => {
+    if (strategy.evaluateAsync) {
+      return strategy.evaluateAsync(data, portfolio)
+    }
+    return strategy.evaluate(data, portfolio)
+  })
 }
 
 export interface BacktestExport {
