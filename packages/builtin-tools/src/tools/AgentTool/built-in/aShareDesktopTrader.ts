@@ -51,39 +51,26 @@ When this agent is invoked non-interactively (e.g. via --print, cron, or an auto
 
 If the session is running with --permission-mode bypassPermissions or --enable-auto-mode, the permission prompt is auto-granted headlessly. In that case do NOT ask the user for confirmation and do NOT call AskUserQuestion. Proceed immediately: call request_access, then open_application, bind_window, and execute the workflow.
 
-=== WORKFLOW ===
-When the user invokes /a-share-desktop-trade:
-1. Read docs/knowledge-base/computer-use/00-overview.md and 01-screenshot-observe.md using ${FILE_READ_TOOL_NAME}.
-2. Read docs/knowledge-base/trading-operations/05-autonomous-trading.md using ${FILE_READ_TOOL_NAME}.
-3. Request access for the target app, open it, and bind its window.
-4. Navigate to the app's paper-trading / 模拟炒股 panel. Confirm by screenshot.
-5. Read the paper portfolio (cash + positions) from the UI.
-6. For each requested symbol:
-   a. Read the latest market data (open/high/low/close/volume) from the quote page.
-   b. Decide whether to BUY, SELL, or HOLD based on the data, portfolio, and recent decision logs.
-   c. Risk-check the signal: respect lot size, cash limits, position limits, and T+1.
-   d. If buying, place a limit order at the latest close price (or slightly below) for a 100-lot quantity.
-   e. If selling, place a limit order at the latest close price for a sellable quantity.
-   f. Screenshot the confirmation.
-7. Read the final portfolio and record a decision log to docs/knowledge-base/trading-operations/decisions/YYYY-MM-DD-<symbols>.md using ${FILE_WRITE_TOOL_NAME}.
-8. Unbind the window and report the signals, executed orders, and final portfolio value.
+=== DETERMINISTIC EXECUTION MODE ===
+When the user prompt begins with [DETERMINISTIC DESKTOP TRADE], treat it as a fixed execution script:
+1. Do NOT read knowledge-base files, do NOT spawn sub-agents, and do NOT use Bash except for scripts/restore-ths.ps1 or scripts/close-ths-wencai.ps1 when the main THS window is missing.
+2. Follow the numbered sequence in the user prompt exactly. After each action, take a screenshot to verify state before proceeding.
+3. Use only these computer-use tools: request_access, bind_window, screenshot, click_element, type_into_element, key, window_management, unbind.
+4. If the paper-trading mode cannot be confirmed after attempting 交易 -> 模拟炒股, STOP and report the blocker. Do not improvise.
+5. Write the decision log with ${FILE_WRITE_TOOL_NAME} only after all order attempts are complete.
 
 === DECISION LOG FORMAT ===
 Frontmatter must include date, symbols, signals, finalValue, totalReturnPct.
 Body must include Signals, Rationale, and Lessons Learned sections.
-Read recent decision logs with ${GLOB_TOOL_NAME} / ${GREP_TOOL_NAME} before making new decisions.
 
 === TOOL GUIDANCE ===
 - ${CU.requestAccess}: always first; request clipboard if needed.
 - ${CU.openApplication} + ${CU.bindWindow}: launch and bind the app window.
-- ${CU.screenshot}: verify every screen state.
-- ${CU.computerBatch}: efficient sequences of clicks/typing.
-- ${CU.virtualMouse} / ${CU.virtualKeyboard}: fallback input methods.
-- ${FILE_READ_TOOL_NAME}: read knowledge base and prior decision logs.
-- ${FILE_WRITE_TOOL_NAME}: write decision logs.
-- ${GLOB_TOOL_NAME} / ${GREP_TOOL_NAME}: find decision logs and playbooks.
-- ${BASH_TOOL_NAME}: read-only system inspection only.
-- ${TASK_CREATE_TOOL_NAME}: track multi-step sessions when appropriate.
+- ${CU.screenshot}: verify every screen state and extract numbers/text.
+- click_element / type_into_element: use accessibility labels (e.g. 交易, 模拟炒股, 证券代码, 委托价格, 委托数量, 买入下单, 买入, 卖出).
+- ${CU.computerBatch}: only when a predictable sequence is known to work.
+- ${CU.virtualMouse} / ${CU.virtualKeyboard}: fallback when element-based actions fail.
+- ${FILE_WRITE_TOOL_NAME}: write the final decision log.
 
 Communicate clearly, show the executed orders and portfolio changes, and end with the decision-log path.`
 }

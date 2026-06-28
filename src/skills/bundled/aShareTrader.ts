@@ -115,25 +115,45 @@ For non-interactive/headless runs, invoke the CLI with --load-computer-use-mcp (
   }
 
   const [app, ...symbols] = tokens
-  return `Run a desktop A-share paper-trading session via ${app}.
+  const symbolList = symbols.length > 0 ? symbols.join(' ') : '(none specified)'
+  return `[DETERMINISTIC DESKTOP TRADE]
+Run a fixed-flow desktop A-share paper-trading session via ${app}.
 
-Steps:
-1. Read docs/knowledge-base/computer-use/00-overview.md and 01-screenshot-observe.md.
-2. Read docs/knowledge-base/trading-operations/05-autonomous-trading.md.
-3. Use computer-use tools directly. Do NOT use Bash to search for the executable path.
-   - Call mcp__computer-use__request_access for ${app}.
-   - Call mcp__computer-use__bind_window action=list. If ${app} is already running, bind to the existing main terminal window (e.g. "同花顺(9.60.20) - 首页"). Avoid auxiliary windows such as "问财AI助手", login dialogs, or update popups.
-   - Only call mcp__computer-use__open_application if no matching window exists.
-   - If open_application fails with LAUNCH_FAILED, the app is already running; list windows again and bind.
-   - Then navigate to paper trading (模拟炒股 / 模拟交易).
-4. Read the paper portfolio and market data for: ${symbols.join(' ') || '(none specified)'}. If no symbols are given, use the app's current watchlist.
-5. Generate buy/sell/hold signals, execute paper orders, and screenshot confirmations.
-6. Write a decision log to docs/knowledge-base/trading-operations/decisions/YYYY-MM-DD-<symbols>.md.
-7. Unbind the window and report results.
+Symbols: ${symbolList}
+Initial cash: ¥100,000
+Strategy: For each symbol, BUY 100 shares at the latest close price if cash allows; otherwise HOLD.
 
-Safety: stop immediately if a real-money account flow (实盘交易, 真实账户, 资金账号) is detected.
+Rules:
+- Follow the numbered sequence exactly. Do NOT read knowledge-base files, do NOT spawn sub-agents, do NOT use Bash except to run scripts/restore-ths.ps1 or scripts/close-ths-wencai.ps1 if the main THS window is missing.
+- Use only these computer-use tools: request_access, bind_window, screenshot, click_element, type_into_element, key, window_management, unbind.
+- A-share lot size is 100 shares. Never place a real-money order.
+- Stop immediately if the UI shows 实盘交易, 真实账户, 资金账号, 银证转账, or account-opening prompts.
 
-Headless note: when this session was launched with --print or by cron, include --load-computer-use-mcp on the CLI. With --permission-mode bypassPermissions or --enable-auto-mode, permission is auto-granted headlessly; do NOT ask the user, just call request_access and proceed.`
+Sequence:
+1. mcp__computer-use__request_access apps=["同花顺"] reason="A-share desktop paper-trading automation"
+2. mcp__computer-use__bind_window action=list. Pick the main THS terminal window (largest window; title contains 同花顺 and preferably 首页). Avoid 问财AI助手, login dialogs, and update popups. Bind it.
+3. mcp__computer-use__screenshot. If the text does NOT contain "模拟炒股" or "模拟交易":
+   a. Try mcp__computer-use__click_element name="交易".
+   b. Try mcp__computer-use__click_element name="模拟炒股".
+   c. mcp__computer-use__screenshot again. If paper-mode text is still absent, STOP and tell the user to manually open 模拟炒股 mode, then re-run.
+4. Read the paper portfolio from the screenshot text. Return the cash balance and positions as JSON.
+5. For each symbol in [${symbolList}]:
+   a. Focus the symbol input (click_element name="证券代码"), type the symbol, press Return.
+   b. mcp__computer-use__screenshot and extract the latest close price.
+   c. If cash >= close * 100, record signal BUY 100 shares at close; subtract close*100 from cash. Otherwise HOLD.
+6. For each BUY signal:
+   a. mcp__computer-use__click_element name="买入".
+   b. click_element name="证券代码", type symbol.
+   c. click_element name="委托价格", type close price (two decimals).
+   d. click_element name="委托数量", type 100.
+   e. click_element name="买入下单".
+   f. mcp__computer-use__screenshot. If text contains "委托成功", "已成", or "已报", the order is placed. Otherwise STOP.
+7. mcp__computer-use__screenshot to read the final portfolio.
+8. Write a decision log to docs/knowledge-base/trading-operations/decisions/YYYY-MM-DD-<symbols joined by ->.md with frontmatter (date, symbols, signals, finalValue, totalReturnPct) and sections for Signals, Rationale, Lessons Learned.
+9. mcp__computer-use__bind_window action=unbind.
+10. Report: signals, executed orders, final portfolio value, and decision-log path.
+
+Headless note: For non-interactive runs, invoke the CLI with --load-computer-use-mcp (and --permission-mode bypassPermissions only if the user has pre-approved unattended execution).`
 }
 
 function extractIntervalAndApp(args: string): {
