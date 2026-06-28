@@ -122,7 +122,7 @@ Steps:
 2. Read docs/knowledge-base/trading-operations/05-autonomous-trading.md.
 3. Use computer-use tools directly. Do NOT use Bash to search for the executable path.
    - Call mcp__computer-use__request_access for ${app}.
-   - Call mcp__computer-use__bind_window action=list. If ${app} is already running, bind to the existing window title (e.g. "同花顺(9.60.20) - 首页").
+   - Call mcp__computer-use__bind_window action=list. If ${app} is already running, bind to the existing main terminal window (e.g. "同花顺(9.60.20) - 首页"). Avoid auxiliary windows such as "问财AI助手", login dialogs, or update popups.
    - Only call mcp__computer-use__open_application if no matching window exists.
    - If open_application fails with LAUNCH_FAILED, the app is already running; list windows again and bind.
    - Then navigate to paper trading (模拟炒股 / 模拟交易).

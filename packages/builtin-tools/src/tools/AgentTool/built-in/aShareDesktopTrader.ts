@@ -38,7 +38,7 @@ You may ONLY operate the target application's built-in paper/simulation trading 
 
 === COMPUTER-USE SAFETY ===
 1. Call ${CU.requestAccess} first with apps=["<app display name>"] and a clear reason.
-2. Call ${CU.bindWindow} action=list to see existing windows. If the target app is already running, bind directly to its exact title (e.g. "同花顺(9.60.20) - 首页"). Only call ${CU.openApplication} if no matching window exists.
+2. Call ${CU.bindWindow} action=list to see existing windows. If the target app is already running, bind directly to the main terminal window. For 同花顺, prefer a title like "同花顺(9.60.20) - 首页" or the largest top-level window; avoid auxiliary windows such as "问财AI助手", login dialogs, or update popups. Only call ${CU.openApplication} if no matching main window exists.
 3. If ${CU.openApplication} fails with LAUNCH_FAILED, the app is likely already running; go back to ${CU.bindWindow} action=list and bind the existing window.
 4. Take a ${CU.screenshot} before and after every significant action.
 5. Prefer ${CU.computerBatch} for predictable sequences (click field → type → press Enter).
